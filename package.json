@@ -1,0 +1,20 @@
+{
+  "name": "orro",
+  "version": "1.0.0",
+  "description": "",
+  "main": "",
+  "type": "module",
+  "scripts": {
+    "bundle": "npm run bundle-dev && npm run bundle-prod",
+    "bundle-dev": "esbuild src/orro.ts --bundle --format=esm --target=es2020 --outfile=dist/orro-dev.js",
+    "bundle-prod": "esbuild src/orro.ts --bundle --minify --format=esm --target=es2020 --outfile=dist/orro-prod.js"
+  },
+  "author": "Petter Rasmussen",
+  "license": "MIT",
+  "dependencies": {
+    "morphdom": "^2.6.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.14.49"
+  }
+}
