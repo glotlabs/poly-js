@@ -2,7 +2,7 @@
   "name": "orro",
   "version": "1.0.0",
   "description": "",
-  "main": "",
+  "main": "src/orro.ts",
   "type": "module",
   "scripts": {
     "bundle": "npm run bundle-dev && npm run bundle-prod",
