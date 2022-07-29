@@ -170,7 +170,7 @@ function handleEvent(e, eventName) {
 
   handlers
     .filter((handler) => {
-      if (handler.config.event.matchParents) {
+      if (handler.config.event.matchParentElements) {
         return elem.closest(handler.selector);
       } else {
         return elem.matches(handler.selector);
