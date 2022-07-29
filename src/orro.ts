@@ -5,22 +5,26 @@ interface Config {
   debug: boolean,
 }
 
+
 class Orro {
   readonly appElem: HTMLElement;
   readonly debug: boolean;
+  readonly effects: Effects;
 
-  constructor({ appId, debug } : Config) {
-    const appElem = document.getElementById(appId);
+  constructor(private config : Config) {
+    const effects = new BrowserEffects();
+    const appElem = effects.getElementById(config.appId);
     if (!appElem) {
-      throw new Error(`Could not find element with id #${appId}`);
+      throw new Error(`Could not find element with id #${config.appId}`);
     }
 
     this.appElem = appElem;
     this.debug = debug;
+    this.effects = effects;
   }
 
   updateDom(markup) {
-    const focusedElement = document.activeElement;
+    const focusedElement = this.effects.getActiveElement();
 
     morphdom(this.appElem, markup, {
       onBeforeElUpdated(fromElem, toElem) {
@@ -364,4 +368,39 @@ const rustEnum = {
   },
 };
 
-export { Orro, rustEnum };
+interface Effects {
+  getElementById(id: string): HTMLElement;
+  getActiveElement(): Element;
+  addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean) : void;
+  removeInterval(type: string, listener: EventListenerOrEventListenerObject, options?: boolean) : void;
+  setInterval(handler: TimerHandler, timeout?: number): number;
+  clearInterval(id?: number) : void;
+}
+
+class BrowserEffects implements Effects {
+  getElementById(id: string): HTMLElement {
+    return document.getElementById(id);
+  }
+
+  getActiveElement(): Element {
+    return document.activeElement;
+  }
+
+  addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean): void {
+    document.addEventListener(type, listener, options);
+  }
+
+  removeInterval(type: string, listener: EventListenerOrEventListenerObject, options?: boolean): void {
+    document.removeEventListener(type, listener, options);
+  }
+
+  setInterval(handler: TimerHandler, timeout?: number): number {
+    return window.setInterval(handler, timeout);
+  }
+
+  clearInterval(id?: number): void {
+    window.clearInterval(id);
+  }
+}
+
+export { Orro, rustEnum , BrowserEffects, Effects, Config };
