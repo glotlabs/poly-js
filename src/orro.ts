@@ -1,5 +1,74 @@
 import morphdom from "morphdom";
 
+interface Config {
+  appId: string,
+  debug: boolean,
+}
+
+class Orro {
+  readonly appElem: HTMLElement;
+  readonly debug: boolean;
+
+  constructor({ appId, debug } : Config) {
+    const appElem = document.getElementById(appId);
+    if (!appElem) {
+      throw new Error(`Could not find element with id #${appId}`);
+    }
+
+    this.appElem = appElem;
+    this.debug = debug;
+  }
+
+  updateDom(markup) {
+    const focusedElement = document.activeElement;
+
+    morphdom(this.appElem, markup, {
+      onBeforeElUpdated(fromElem, toElem) {
+        // Skip update of focused input element, this prevents resetting the input value while the user is typing.
+        const inputIsFocused =
+          fromElem.nodeName === "INPUT" &&
+          toElem.nodeName === "INPUT" &&
+          fromElem.isSameNode(focusedElement) &&
+          (fromElem as HTMLInputElement).value !==
+            (toElem as HTMLInputElement).value;
+
+        if (inputIsFocused) {
+          return false;
+        }
+
+        // Skip elements which has the unmanaged attribute
+        const isUnmanaged = fromElem.hasAttribute("unmanaged");
+        if (isUnmanaged) {
+          return false;
+        }
+
+        return true;
+      },
+    });
+  }
+
+  initLogic(logic, msgHandler) {
+    const eventHandlers = prepareEventHandlers(logic.eventListeners);
+    const intervals = logic.intervals.map(startInterval);
+
+    initEventHandlers(eventHandlers);
+
+    Object.assign(orro, {
+      eventListeners: eventHandlers,
+      intervals,
+      msgHandler,
+    });
+  }
+
+  updateLogic(logic) {
+    updateEventListeners(logic.eventListeners);
+    updateIntervals(logic.intervals);
+  }
+
+}
+
+const debug = true;
+
 const orro = {
   eventListeners: [],
   intervals: [],
@@ -168,6 +237,14 @@ function handleEvent(e, eventName) {
   const elem = e.target;
   const handlers = orro.eventListeners[eventName];
 
+  if (debug) {
+    console.debug("ORRO DEBUG", {
+      functionName: "handleEvent",
+      eventName,
+      targetElement: elem,
+    });
+  }
+
   handlers
     .filter((handler) => {
       if (handler.config.event.matchParentElements) {
@@ -241,53 +318,7 @@ function update(msg) {
   orro.msgHandler(msg);
 }
 
-function updateDom(targetElem, markup) {
-  const focusedElement = document.activeElement;
-
-  morphdom(targetElem, markup, {
-    onBeforeElUpdated(fromElem, toElem) {
-      // Skip update of focused input element, this prevents resetting the input value while the user is typing.
-      const inputIsFocused =
-        fromElem.nodeName === "INPUT" &&
-        toElem.nodeName === "INPUT" &&
-        fromElem.isSameNode(focusedElement) &&
-        (fromElem as HTMLInputElement).value !== (toElem as HTMLInputElement).value;
-
-      if (inputIsFocused) {
-        return false;
-      }
-
-      // Skip elements which has the unmanaged attribute
-      const isUnmanaged = fromElem.hasAttribute("unmanaged");
-      if (isUnmanaged) {
-        return false;
-      }
-
-      return true;
-    },
-  });
-}
-
-function initLogic(logic, msgHandler) {
-  const eventHandlers = prepareEventHandlers(logic.eventListeners);
-  const intervals = logic.intervals.map(startInterval);
-
-  initEventHandlers(eventHandlers);
-
-  Object.assign(orro, {
-    eventListeners: eventHandlers,
-    intervals,
-    msgHandler,
-  });
-}
-
-function updateLogic(logic) {
-  updateEventListeners(logic.eventListeners);
-  updateIntervals(logic.intervals);
-}
-
 function initEventHandlers(eventHandlers) {
-  console.log(eventHandlers);
   Object.keys(eventHandlers).forEach((eventName) => {
     document.addEventListener(
       eventName,
@@ -333,4 +364,4 @@ const rustEnum = {
   },
 };
 
-export { updateDom, initLogic, updateLogic, rustEnum };
+export { Orro, rustEnum };
