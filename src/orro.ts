@@ -1,5 +1,6 @@
 import morphdom from "morphdom";
 import { Browser, RealBrowser } from "./browser";
+import { EventQueue } from "./event_queue";
 
 interface Config {
   appId: string;
@@ -7,13 +8,14 @@ interface Config {
 }
 
 class Orro {
-  readonly appElem: HTMLElement;
-  readonly browser: Browser;
+  private readonly appElem: HTMLElement;
+  private readonly browser: Browser;
 
-  readonly state = {
+  private readonly state = {
     eventListeners: [],
     intervals: [],
-    eventQueue: this.initEventQueue(),
+    // TODO: remove out of state?
+    eventQueue: new EventQueue(),
     msgHandler: (msg) => {},
   };
 
@@ -74,7 +76,7 @@ class Orro {
     this.updateIntervals(logic.intervals);
   }
 
-  startInterval(interval) {
+  private startInterval(interval) {
     if (interval.duration < 100) {
       console.warn(
         "Ignoring interval with low duration: ${interval.duration}ms"
@@ -93,66 +95,11 @@ class Orro {
     return interval;
   }
 
-  getIntervalId(interval) {
+  private getIntervalId(interval) {
     return `${interval.id}-${interval.msg}-${interval.duration}`;
   }
 
-  initEventQueue() {
-    const state = {
-      queue: [],
-      processing: false,
-    };
-
-    function enqueue({ id, strategy, action }) {
-      if (state.queue.length > 100) {
-        console.warn("Event queue is full, dropping event", id);
-        return;
-      }
-
-      if (strategy === "dropOlder") {
-        state.queue = state.queue.filter((item) => item.id !== id);
-      }
-
-      new Promise((resolve, reject) => {
-        state.queue.push({
-          id,
-          action,
-          resolve,
-          reject,
-        });
-      });
-
-      if (!state.processing) {
-        processNext();
-      }
-    }
-
-    async function processNext() {
-      const event = state.queue.shift();
-      if (!event) {
-        return;
-      }
-
-      state.processing = true;
-
-      try {
-        event.action();
-        event.resolve();
-      } catch (e) {
-        console.error("Failed to run action", e);
-        event.reject();
-      }
-
-      state.processing = false;
-      processNext();
-    }
-
-    return {
-      enqueue,
-    };
-  }
-
-  prepareEventHandlers(eventListeners) {
+  private prepareEventHandlers(eventListeners) {
     return eventListeners.reduce((acc, listener) => {
       const type = listener.event.type;
 
@@ -172,7 +119,7 @@ class Orro {
     }, {});
   }
 
-  updateEventListeners(eventListeners) {
+  private updateEventListeners(eventListeners) {
     const currentListeners = { ...this.state.eventListeners };
 
     eventListeners.forEach((listener) => {
@@ -186,14 +133,14 @@ class Orro {
     this.state.eventListeners = currentListeners;
   }
 
-  addEventHandlers(currentListeners, eventListeners) {
+  private addEventHandlers(currentListeners, eventListeners) {
     Object.entries(eventListeners).forEach(([eventName, handlers]) => {
       const currentHandlers = currentListeners[eventName] || [];
       currentListeners[eventName] = currentHandlers.concat(handlers);
     });
   }
 
-  removeEventListeners(currentListeners, id) {
+  private removeEventListeners(currentListeners, id) {
     Object.entries(currentListeners).forEach(([eventName, handlers]) => {
       currentListeners[eventName] = (handlers as any[]).filter((handler) => {
         return handler.id !== id;
@@ -201,7 +148,7 @@ class Orro {
     });
   }
 
-  updateIntervals(intervals) {
+  private updateIntervals(intervals) {
     const currentIntervals = this.state.intervals;
 
     const newIds = intervals.map(this.getIntervalId);
@@ -234,7 +181,7 @@ class Orro {
     this.state.intervals = [].concat(continuingIntervals, newIntervals);
   }
 
-  handleEvent(e, eventName) {
+  private handleEvent(e, eventName) {
     const elem = e.target;
     const handlers = this.state.eventListeners[eventName];
 
@@ -273,7 +220,7 @@ class Orro {
       });
   }
 
-  replacePlaceholderValue(value) {
+  private replacePlaceholderValue(value) {
     if (value.startsWith("VALUE_FROM_ID:")) {
       const elemId = value.replace("VALUE_FROM_ID:", "");
       const elem = document.getElementById(elemId) as HTMLInputElement;
@@ -287,7 +234,7 @@ class Orro {
     return value;
   }
 
-  replaceMsgPlaceholder(msg, currentElem) {
+  private replaceMsgPlaceholder(msg, currentElem) {
     if (typeof msg !== "object") {
       return msg;
     }
@@ -300,7 +247,7 @@ class Orro {
     return Object.fromEntries(entries);
   }
 
-  queueUpdate({ id, strategy, msg }) {
+  private queueUpdate({ id, strategy, msg }) {
     const msgHandler = this.state.msgHandler;
 
     return this.state.eventQueue.enqueue({
@@ -317,7 +264,7 @@ class Orro {
     });
   }
 
-  initEventHandlers(eventHandlers) {
+  private initEventHandlers(eventHandlers) {
     Object.keys(eventHandlers).forEach((eventName) => {
       document.addEventListener(
         eventName,
