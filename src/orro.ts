@@ -1,30 +1,30 @@
 import morphdom from "morphdom";
+import { Browser, RealBrowser } from "./browser";
 
 interface Config {
   appId: string,
   debug: boolean,
 }
 
-
 class Orro {
   readonly appElem: HTMLElement;
   readonly debug: boolean;
-  readonly effects: Effects;
+  readonly browser: Browser;
 
   constructor(private config : Config) {
-    const effects = new BrowserEffects();
-    const appElem = effects.getElementById(config.appId);
+    const browser = new RealBrowser();
+    const appElem = browser.getElementById(config.appId);
     if (!appElem) {
       throw new Error(`Could not find element with id #${config.appId}`);
     }
 
     this.appElem = appElem;
     this.debug = debug;
-    this.effects = effects;
+    this.browser = browser;
   }
 
   updateDom(markup) {
-    const focusedElement = this.effects.getActiveElement();
+    const focusedElement = this.browser.getActiveElement();
 
     morphdom(this.appElem, markup, {
       onBeforeElUpdated(fromElem, toElem) {
@@ -334,73 +334,5 @@ function initEventHandlers(eventHandlers) {
   });
 }
 
-const rustEnum = {
-  withoutValue(name) {
-    return name;
-  },
 
-  tupleWithoutValue(name) {
-    return { [name]: [] };
-  },
-
-  tuple(name, values) {
-    if (!Array.isArray(values)) {
-      throw new Error("Tuple values must be an array");
-    }
-
-    if (values.length === 0) {
-      this.tupleWithoutValue(name);
-    }
-
-    if (values.length === 1) {
-      return { [name]: values[0] };
-    }
-
-    return { [name]: values };
-  },
-
-  object(name, value) {
-    if (typeof value !== "object") {
-      throw new Error("Value must be an object");
-    }
-
-    return { [name]: value };
-  },
-};
-
-interface Effects {
-  getElementById(id: string): HTMLElement;
-  getActiveElement(): Element;
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean) : void;
-  removeInterval(type: string, listener: EventListenerOrEventListenerObject, options?: boolean) : void;
-  setInterval(handler: TimerHandler, timeout?: number): number;
-  clearInterval(id?: number) : void;
-}
-
-class BrowserEffects implements Effects {
-  getElementById(id: string): HTMLElement {
-    return document.getElementById(id);
-  }
-
-  getActiveElement(): Element {
-    return document.activeElement;
-  }
-
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean): void {
-    document.addEventListener(type, listener, options);
-  }
-
-  removeInterval(type: string, listener: EventListenerOrEventListenerObject, options?: boolean): void {
-    document.removeEventListener(type, listener, options);
-  }
-
-  setInterval(handler: TimerHandler, timeout?: number): number {
-    return window.setInterval(handler, timeout);
-  }
-
-  clearInterval(id?: number): void {
-    window.clearInterval(id);
-  }
-}
-
-export { Orro, rustEnum , BrowserEffects, Effects, Config };
+export { Orro, Config };
