@@ -2,16 +2,22 @@ import morphdom from "morphdom";
 import { Browser, RealBrowser } from "./browser";
 
 interface Config {
-  appId: string,
-  debug: boolean,
+  appId: string;
+  debug: boolean;
 }
 
 class Orro {
   readonly appElem: HTMLElement;
-  readonly debug: boolean;
   readonly browser: Browser;
 
-  constructor(private config : Config) {
+  readonly state = {
+    eventListeners: [],
+    intervals: [],
+    eventQueue: this.initEventQueue(),
+    msgHandler: (msg) => {},
+  };
+
+  constructor(private config: Config) {
     const browser = new RealBrowser();
     const appElem = browser.getElementById(config.appId);
     if (!appElem) {
@@ -19,7 +25,6 @@ class Orro {
     }
 
     this.appElem = appElem;
-    this.debug = debug;
     this.browser = browser;
   }
 
@@ -52,12 +57,12 @@ class Orro {
   }
 
   initLogic(logic, msgHandler) {
-    const eventHandlers = prepareEventHandlers(logic.eventListeners);
-    const intervals = logic.intervals.map(startInterval);
+    const eventHandlers = this.prepareEventHandlers(logic.eventListeners);
+    const intervals = logic.intervals.map(this.startInterval);
 
-    initEventHandlers(eventHandlers);
+    this.initEventHandlers(eventHandlers);
 
-    Object.assign(orro, {
+    Object.assign(this.state, {
       eventListeners: eventHandlers,
       intervals,
       msgHandler,
@@ -65,274 +70,264 @@ class Orro {
   }
 
   updateLogic(logic) {
-    updateEventListeners(logic.eventListeners);
-    updateIntervals(logic.intervals);
+    this.updateEventListeners(logic.eventListeners);
+    this.updateIntervals(logic.intervals);
   }
 
-}
+  startInterval(interval) {
+    if (interval.duration < 100) {
+      console.warn(
+        "Ignoring interval with low duration: ${interval.duration}ms"
+      );
+      return interval;
+    }
 
-const debug = true;
+    interval.id = setInterval(() => {
+      this.queueUpdate({
+        id: this.getIntervalId(interval),
+        strategy: interval.queueStrategy,
+        msg: interval.msg,
+      });
+    }, interval.duration);
 
-const orro = {
-  eventListeners: [],
-  intervals: [],
-  eventQueue: initEventQueue(),
-  msgHandler: (msg) => {},
-};
-
-function startInterval(interval) {
-  if (interval.duration < 100) {
-    console.warn("Ignoring interval with low duration: ${interval.duration}ms");
     return interval;
   }
 
-  interval.id = setInterval(() => {
-    queueUpdate({
-      id: getIntervalId(interval),
-      strategy: interval.queueStrategy,
-      msg: interval.msg,
-    });
-  }, interval.duration);
+  getIntervalId(interval) {
+    return `${interval.id}-${interval.msg}-${interval.duration}`;
+  }
 
-  return interval;
-}
+  initEventQueue() {
+    const state = {
+      queue: [],
+      processing: false,
+    };
 
-function getIntervalId(interval) {
-  return `${interval.id}-${interval.msg}-${interval.duration}`;
-}
+    function enqueue({ id, strategy, action }) {
+      if (state.queue.length > 100) {
+        console.warn("Event queue is full, dropping event", id);
+        return;
+      }
 
-function initEventQueue() {
-  const state = {
-    queue: [],
-    processing: false,
-  };
+      if (strategy === "dropOlder") {
+        state.queue = state.queue.filter((item) => item.id !== id);
+      }
 
-  function enqueue({ id, strategy, action }) {
-    if (state.queue.length > 100) {
-      console.warn("Event queue is full, dropping event", id);
-      return;
-    }
-
-    if (strategy === "dropOlder") {
-      state.queue = state.queue.filter((item) => item.id !== id);
-    }
-
-    new Promise((resolve, reject) => {
-      state.queue.push({
-        id,
-        action,
-        resolve,
-        reject,
+      new Promise((resolve, reject) => {
+        state.queue.push({
+          id,
+          action,
+          resolve,
+          reject,
+        });
       });
-    });
 
-    if (!state.processing) {
+      if (!state.processing) {
+        processNext();
+      }
+    }
+
+    async function processNext() {
+      const event = state.queue.shift();
+      if (!event) {
+        return;
+      }
+
+      state.processing = true;
+
+      try {
+        event.action();
+        event.resolve();
+      } catch (e) {
+        console.error("Failed to run action", e);
+        event.reject();
+      }
+
+      state.processing = false;
       processNext();
     }
+
+    return {
+      enqueue,
+    };
   }
 
-  async function processNext() {
-    const event = state.queue.shift();
-    if (!event) {
-      return;
-    }
+  prepareEventHandlers(eventListeners) {
+    return eventListeners.reduce((acc, listener) => {
+      const type = listener.event.type;
 
-    state.processing = true;
+      if (!(type in acc)) {
+        acc[type] = [];
+      }
 
-    try {
-      event.action();
-      event.resolve();
-    } catch (e) {
-      event.reject();
-    }
+      acc[type].push({
+        config: listener.event.config,
+        id: listener.id,
+        selector: listener.selector,
+        msg: listener.msg,
+        queueStrategy: listener.queueStrategy,
+      });
 
-    state.processing = false;
-    processNext();
+      return acc;
+    }, {});
   }
 
-  return {
-    enqueue,
-  };
-}
+  updateEventListeners(eventListeners) {
+    const currentListeners = { ...this.state.eventListeners };
 
-function prepareEventHandlers(eventListeners) {
-  return eventListeners.reduce((acc, listener) => {
-    const type = listener.event.type;
-
-    if (!(type in acc)) {
-      acc[type] = [];
-    }
-
-    acc[type].push({
-      config: listener.event.config,
-      id: listener.id,
-      selector: listener.selector,
-      msg: listener.msg,
-      queueStrategy: listener.queueStrategy,
+    eventListeners.forEach((listener) => {
+      this.removeEventListeners(currentListeners, listener.id);
     });
 
-    return acc;
-  }, {});
-}
+    // TODO: call document.addEventListener on new event types (onclick, etc)
+    const handlers = this.prepareEventHandlers(eventListeners);
+    this.addEventHandlers(currentListeners, handlers);
 
-function updateEventListeners(eventListeners) {
-  const currentListeners = { ...orro.eventListeners };
+    this.state.eventListeners = currentListeners;
+  }
 
-  eventListeners.forEach((listener) => {
-    removeEventListeners(currentListeners, listener.id);
-  });
-
-  // TODO: call document.addEventListener on new event types (onclick, etc)
-  const handlers = prepareEventHandlers(eventListeners);
-  addEventHandlers(currentListeners, handlers);
-
-  orro.eventListeners = currentListeners;
-}
-
-function addEventHandlers(currentListeners, eventListeners) {
-  Object.entries(eventListeners).forEach(([eventName, handlers]) => {
-    const currentHandlers = currentListeners[eventName] || [];
-    currentListeners[eventName] = currentHandlers.concat(handlers);
-  });
-}
-
-function removeEventListeners(currentListeners, id) {
-  Object.entries(currentListeners).forEach(([eventName, handlers]) => {
-    currentListeners[eventName] = (handlers as any[]).filter((handler) => {
-      return handler.id !== id;
-    });
-  });
-}
-
-function updateIntervals(intervals) {
-  const currentIntervals = orro.intervals;
-
-  const newIds = intervals.map(getIntervalId);
-  const currentIds = currentIntervals.map(getIntervalId);
-
-  // Stop intervals that does not exist anymore
-  currentIntervals
-    .filter((interval) => {
-      const id = getIntervalId(interval);
-      return !newIds.includes(id);
-    })
-    .forEach((interval) => {
-      clearInterval(interval.id);
-    });
-
-  // Get existing intervals that we want to keep
-  const continuingIntervals = currentIntervals.filter((interval) => {
-    const id = getIntervalId(interval);
-    return newIds.includes(id);
-  });
-
-  // Start new intervals
-  const newIntervals = intervals
-    .filter((interval) => {
-      const id = getIntervalId(interval);
-      return !currentIds.includes(id);
-    })
-    .map(startInterval);
-
-  orro.intervals = [].concat(continuingIntervals, newIntervals);
-}
-
-function handleEvent(e, eventName) {
-  const elem = e.target;
-  const handlers = orro.eventListeners[eventName];
-
-  if (debug) {
-    console.debug("ORRO DEBUG", {
-      functionName: "handleEvent",
-      eventName,
-      targetElement: elem,
+  addEventHandlers(currentListeners, eventListeners) {
+    Object.entries(eventListeners).forEach(([eventName, handlers]) => {
+      const currentHandlers = currentListeners[eventName] || [];
+      currentListeners[eventName] = currentHandlers.concat(handlers);
     });
   }
 
-  handlers
-    .filter((handler) => {
-      if (handler.config.event.matchParentElements) {
-        return elem.closest(handler.selector);
-      } else {
-        return elem.matches(handler.selector);
-      }
-    })
-    .forEach((handler) => {
-      if (handler.config.event.preventDefault) {
-        e.preventDefault();
-      }
-
-      if (handler.config.event.stopPropagation) {
-        e.stopPropagation();
-      }
-
-      const msg = replaceMsgPlaceholder(handler.msg, elem);
-
-      queueUpdate({
-        id: handler.selector,
-        strategy: handler.queueStrategy,
-        msg,
+  removeEventListeners(currentListeners, id) {
+    Object.entries(currentListeners).forEach(([eventName, handlers]) => {
+      currentListeners[eventName] = (handlers as any[]).filter((handler) => {
+        return handler.id !== id;
       });
     });
-}
+  }
 
-function replacePlaceholderValue(value) {
-  if (value.startsWith("VALUE_FROM_ID:")) {
-    const elemId = value.replace("VALUE_FROM_ID:", "");
-    const elem = document.getElementById(elemId) as HTMLInputElement;
-    if (elem && elem.value) {
-      return elem.value;
+  updateIntervals(intervals) {
+    const currentIntervals = this.state.intervals;
+
+    const newIds = intervals.map(this.getIntervalId);
+    const currentIds = currentIntervals.map(this.getIntervalId);
+
+    // Stop intervals that does not exist anymore
+    currentIntervals
+      .filter((interval) => {
+        const id = this.getIntervalId(interval);
+        return !newIds.includes(id);
+      })
+      .forEach((interval) => {
+        clearInterval(interval.id);
+      });
+
+    // Get existing intervals that we want to keep
+    const continuingIntervals = currentIntervals.filter((interval) => {
+      const id = this.getIntervalId(interval);
+      return newIds.includes(id);
+    });
+
+    // Start new intervals
+    const newIntervals = intervals
+      .filter((interval) => {
+        const id = this.getIntervalId(interval);
+        return !currentIds.includes(id);
+      })
+      .map(this.startInterval);
+
+    this.state.intervals = [].concat(continuingIntervals, newIntervals);
+  }
+
+  handleEvent(e, eventName) {
+    const elem = e.target;
+    const handlers = this.state.eventListeners[eventName];
+
+    if (this.config.debug) {
+      console.debug("ORRO DEBUG", {
+        functionName: "handleEvent",
+        eventName,
+        targetElement: elem,
+      });
     }
 
-    return "";
+    handlers
+      .filter((handler) => {
+        if (handler.config.event.matchParentElements) {
+          return elem.closest(handler.selector);
+        } else {
+          return elem.matches(handler.selector);
+        }
+      })
+      .forEach((handler) => {
+        if (handler.config.event.preventDefault) {
+          e.preventDefault();
+        }
+
+        if (handler.config.event.stopPropagation) {
+          e.stopPropagation();
+        }
+
+        const msg = this.replaceMsgPlaceholder(handler.msg, elem);
+
+        this.queueUpdate({
+          id: handler.selector,
+          strategy: handler.queueStrategy,
+          msg,
+        });
+      });
   }
 
-  return value;
-}
+  replacePlaceholderValue(value) {
+    if (value.startsWith("VALUE_FROM_ID:")) {
+      const elemId = value.replace("VALUE_FROM_ID:", "");
+      const elem = document.getElementById(elemId) as HTMLInputElement;
+      if (elem && elem.value) {
+        return elem.value;
+      }
 
-function replaceMsgPlaceholder(msg, currentElem) {
-  if (typeof msg !== "object") {
-    return msg;
+      return "";
+    }
+
+    return value;
   }
 
-  const entries = Object.entries(msg).map(([key, value]) => {
-    const newValue = replacePlaceholderValue(value);
-    return [key, newValue];
-  });
+  replaceMsgPlaceholder(msg, currentElem) {
+    if (typeof msg !== "object") {
+      return msg;
+    }
 
-  return Object.fromEntries(entries);
-}
+    const entries = Object.entries(msg).map(([key, value]) => {
+      const newValue = this.replacePlaceholderValue(value);
+      return [key, newValue];
+    });
 
-function queueUpdate({ id, strategy, msg }) {
-  return orro.eventQueue.enqueue({
-    id,
-    strategy,
-
-    action() {
-      return update(msg);
-    },
-  });
-}
-
-function update(msg) {
-  if (!msg) {
-    return;
+    return Object.fromEntries(entries);
   }
 
-  orro.msgHandler(msg);
-}
+  queueUpdate({ id, strategy, msg }) {
+    const msgHandler = this.state.msgHandler;
 
-function initEventHandlers(eventHandlers) {
-  Object.keys(eventHandlers).forEach((eventName) => {
-    document.addEventListener(
-      eventName,
-      (e) => {
-        handleEvent(e, eventName);
+    return this.state.eventQueue.enqueue({
+      id,
+      strategy,
+
+      action() {
+        if (!msg) {
+          return;
+        }
+
+        msgHandler(msg);
       },
-      true
-    );
-  });
-}
+    });
+  }
 
+  initEventHandlers(eventHandlers) {
+    Object.keys(eventHandlers).forEach((eventName) => {
+      document.addEventListener(
+        eventName,
+        (e) => {
+          this.handleEvent(e, eventName);
+        },
+        true
+      );
+    });
+  }
+}
 
 export { Orro, Config };
