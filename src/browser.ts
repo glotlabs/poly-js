@@ -1,27 +1,42 @@
-
 interface Browser {
-  getElementById(id: string): HTMLElement;
-  getActiveElement(): Element;
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean) : void;
-  removeInterval(type: string, listener: EventListenerOrEventListenerObject, options?: boolean) : void;
+  getElementById(id: string): HTMLElement | null;
+  getActiveElement(): Element | null;
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean
+  ): void;
+  removeInterval(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean
+  ): void;
   setInterval(handler: TimerHandler, timeout?: number): number;
-  clearInterval(id?: number) : void;
+  clearInterval(id?: number): void;
 }
 
 class RealBrowser implements Browser {
-  getElementById(id: string): HTMLElement {
+  getElementById(id: string): HTMLElement | null {
     return document.getElementById(id);
   }
 
-  getActiveElement(): Element {
+  getActiveElement(): Element | null {
     return document.activeElement;
   }
 
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean): void {
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean
+  ): void {
     document.addEventListener(type, listener, options);
   }
 
-  removeInterval(type: string, listener: EventListenerOrEventListenerObject, options?: boolean): void {
+  removeInterval(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean
+  ): void {
     document.removeEventListener(type, listener, options);
   }
 

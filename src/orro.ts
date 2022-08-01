@@ -1,20 +1,35 @@
 import morphdom from "morphdom";
 import { Browser, RealBrowser } from "./browser";
 import { EventQueue } from "./event_queue";
+import {
+  EventConfig,
+  KeyboardEventConfig,
+  Logic,
+  Msg,
+  RustEventListener,
+  RustInterval,
+} from "./rust_types";
 
 interface Config {
   appId: string;
   debug: boolean;
 }
 
+interface State {
+  eventListeners: Map<string, EventHandler[]>;
+  intervals: RunningInterval[];
+  eventQueue: EventQueue;
+  msgHandler: (msg: object) => void;
+}
+
 class Orro {
   private readonly appElem: HTMLElement;
   private readonly browser: Browser;
 
-  private readonly state = {
-    eventListeners: [],
+  private readonly state: State = {
+    eventListeners: new Map(),
     intervals: [],
-    // TODO: remove out of state?
+    // TODO: move out of state?
     eventQueue: new EventQueue(),
     msgHandler: (msg) => {},
   };
@@ -30,7 +45,7 @@ class Orro {
     this.browser = browser;
   }
 
-  updateDom(markup) {
+  updateDom(markup: string) {
     const focusedElement = this.browser.getActiveElement();
 
     morphdom(this.appElem, markup, {
@@ -58,56 +73,66 @@ class Orro {
     });
   }
 
-  initLogic(logic, msgHandler) {
+  initLogic(logic: Logic, msgHandler: (msg: Msg) => void) {
     const eventHandlers = this.prepareEventHandlers(logic.eventListeners);
-    const intervals = logic.intervals.map(this.startInterval);
+    const intervals = logic.intervals.filter(this.isValidInterval);
 
     this.initEventHandlers(eventHandlers);
+    const startedIntervals = intervals.map(this.startInterval);
 
-    Object.assign(this.state, {
-      eventListeners: eventHandlers,
-      intervals,
-      msgHandler,
-    });
+    this.state.eventListeners = eventHandlers;
+    this.state.intervals = startedIntervals;
+    this.state.msgHandler = msgHandler;
   }
 
-  updateLogic(logic) {
+  updateLogic(logic: Logic) {
     this.updateEventListeners(logic.eventListeners);
     this.updateIntervals(logic.intervals);
   }
 
-  private startInterval(interval) {
+  private isValidInterval(interval: RustInterval): boolean {
     if (interval.duration < 100) {
       console.warn(
         "Ignoring interval with low duration: ${interval.duration}ms"
       );
-      return interval;
+      return false;
     }
 
-    interval.id = setInterval(() => {
+    return true;
+  }
+
+  private startInterval(interval: RustInterval): RunningInterval {
+    const intervalId = this.browser.setInterval(() => {
       this.queueUpdate({
-        id: this.getIntervalId(interval),
+        id: this.formatIntervalId(interval),
         strategy: interval.queueStrategy,
         msg: interval.msg,
       });
     }, interval.duration);
 
-    return interval;
+    return {
+      id: intervalId,
+      interval,
+    };
   }
 
-  private getIntervalId(interval) {
+  private formatIntervalId(interval: RustInterval) {
     return `${interval.id}-${interval.msg}-${interval.duration}`;
   }
 
-  private prepareEventHandlers(eventListeners) {
+  private prepareEventHandlers(
+    eventListeners: RustEventListener[]
+  ): Map<string, EventHandler[]> {
+    const eventHandlers: Map<string, EventHandler[]> = new Map();
+
     return eventListeners.reduce((acc, listener) => {
       const type = listener.event.type;
 
-      if (!(type in acc)) {
-        acc[type] = [];
+      if (!acc.has(type)) {
+        acc.set(type, []);
       }
 
-      acc[type].push({
+      acc.get(type)!.push({
         config: listener.event.config,
         id: listener.id,
         selector: listener.selector,
@@ -116,11 +141,11 @@ class Orro {
       });
 
       return acc;
-    }, {});
+    }, eventHandlers);
   }
 
-  private updateEventListeners(eventListeners) {
-    const currentListeners = { ...this.state.eventListeners };
+  private updateEventListeners(eventListeners: RustEventListener[]) {
+    const currentListeners = new Map(this.state.eventListeners);
 
     eventListeners.forEach((listener) => {
       this.removeEventListeners(currentListeners, listener.id);
@@ -133,57 +158,67 @@ class Orro {
     this.state.eventListeners = currentListeners;
   }
 
-  private addEventHandlers(currentListeners, eventListeners) {
-    Object.entries(eventListeners).forEach(([eventName, handlers]) => {
-      const currentHandlers = currentListeners[eventName] || [];
-      currentListeners[eventName] = currentHandlers.concat(handlers);
+  private addEventHandlers(
+    currentListeners: Map<string, EventHandler[]>,
+    eventListeners: Map<string, EventHandler[]>
+  ) {
+    eventListeners.forEach((handlers, eventName) => {
+      const currentHandlers = currentListeners.get(eventName) || [];
+      currentListeners.set(eventName, currentHandlers.concat(handlers));
     });
   }
 
-  private removeEventListeners(currentListeners, id) {
-    Object.entries(currentListeners).forEach(([eventName, handlers]) => {
-      currentListeners[eventName] = (handlers as any[]).filter((handler) => {
+  private removeEventListeners(
+    currentListeners: Map<string, EventHandler[]>,
+    id: string
+  ) {
+    currentListeners.forEach((handlers, eventName) => {
+      const filteredHandlers = handlers.filter((handler) => {
         return handler.id !== id;
       });
+
+      currentListeners.set(eventName, filteredHandlers);
     });
   }
 
-  private updateIntervals(intervals) {
+  private updateIntervals(intervals: RustInterval[]) {
     const currentIntervals = this.state.intervals;
 
-    const newIds = intervals.map(this.getIntervalId);
-    const currentIds = currentIntervals.map(this.getIntervalId);
+    const newIds = intervals.map(this.formatIntervalId);
+    const currentIds = currentIntervals.map(({ interval }) =>
+      this.formatIntervalId(interval)
+    );
 
     // Stop intervals that does not exist anymore
     currentIntervals
-      .filter((interval) => {
-        const id = this.getIntervalId(interval);
+      .filter(({ interval }) => {
+        const id = this.formatIntervalId(interval);
         return !newIds.includes(id);
       })
       .forEach((interval) => {
-        clearInterval(interval.id);
+        this.browser.clearInterval(interval.id);
       });
 
     // Get existing intervals that we want to keep
-    const continuingIntervals = currentIntervals.filter((interval) => {
-      const id = this.getIntervalId(interval);
+    const continuingIntervals = currentIntervals.filter(({ interval }) => {
+      const id = this.formatIntervalId(interval);
       return newIds.includes(id);
     });
 
     // Start new intervals
     const newIntervals = intervals
       .filter((interval) => {
-        const id = this.getIntervalId(interval);
+        const id = this.formatIntervalId(interval);
         return !currentIds.includes(id);
       })
       .map(this.startInterval);
 
-    this.state.intervals = [].concat(continuingIntervals, newIntervals);
+    this.state.intervals = [...continuingIntervals, ...newIntervals];
   }
 
-  private handleEvent(e, eventName) {
-    const elem = e.target;
-    const handlers = this.state.eventListeners[eventName];
+  private handleEvent(e: Event, eventName: string): void {
+    const elem = e.target as Element;
+    const handlers = this.state.eventListeners.get(eventName);
 
     if (this.config.debug) {
       console.debug("ORRO DEBUG", {
@@ -193,24 +228,32 @@ class Orro {
       });
     }
 
+    if (!handlers) {
+      return;
+    }
+
     handlers
       .filter((handler) => {
-        if (handler.config.event.matchParentElements) {
+        const eventConfig = this.getEventConfig(handler.config);
+
+        if (eventConfig.matchParentElements) {
           return elem.closest(handler.selector);
         } else {
           return elem.matches(handler.selector);
         }
       })
       .forEach((handler) => {
-        if (handler.config.event.preventDefault) {
+        const eventConfig = this.getEventConfig(handler.config);
+
+        if (eventConfig.preventDefault) {
           e.preventDefault();
         }
 
-        if (handler.config.event.stopPropagation) {
+        if (eventConfig.stopPropagation) {
           e.stopPropagation();
         }
 
-        const msg = this.replaceMsgPlaceholder(handler.msg, elem);
+        const msg = this.replaceMsgPlaceholder(handler.msg);
 
         this.queueUpdate({
           id: handler.selector,
@@ -220,10 +263,20 @@ class Orro {
       });
   }
 
-  private replacePlaceholderValue(value) {
+  private getEventConfig(
+    config: EventConfig | KeyboardEventConfig
+  ): EventConfig {
+    if ("event" in config) {
+      return config.event;
+    }
+
+    return config;
+  }
+
+  private replacePlaceholderValue(value: string) {
     if (value.startsWith("VALUE_FROM_ID:")) {
       const elemId = value.replace("VALUE_FROM_ID:", "");
-      const elem = document.getElementById(elemId) as HTMLInputElement;
+      const elem = this.browser.getElementById(elemId) as HTMLInputElement;
       if (elem && elem.value) {
         return elem.value;
       }
@@ -234,20 +287,20 @@ class Orro {
     return value;
   }
 
-  private replaceMsgPlaceholder(msg, currentElem) {
+  private replaceMsgPlaceholder(msg: Msg) {
     if (typeof msg !== "object") {
       return msg;
     }
 
     const entries = Object.entries(msg).map(([key, value]) => {
-      const newValue = this.replacePlaceholderValue(value);
+      const newValue = this.replacePlaceholderValue(value as string);
       return [key, newValue];
     });
 
     return Object.fromEntries(entries);
   }
 
-  private queueUpdate({ id, strategy, msg }) {
+  private queueUpdate({ id, strategy, msg }: Update) {
     const msgHandler = this.state.msgHandler;
 
     return this.state.eventQueue.enqueue({
@@ -264,9 +317,9 @@ class Orro {
     });
   }
 
-  private initEventHandlers(eventHandlers) {
-    Object.keys(eventHandlers).forEach((eventName) => {
-      document.addEventListener(
+  private initEventHandlers(eventHandlers: Map<string, EventHandler[]>) {
+    eventHandlers.forEach((_value, eventName) => {
+      this.browser.addEventListener(
         eventName,
         (e) => {
           this.handleEvent(e, eventName);
@@ -275,6 +328,25 @@ class Orro {
       );
     });
   }
+}
+
+interface EventHandler {
+  config: EventConfig | KeyboardEventConfig;
+  id: string;
+  selector: string;
+  msg: Msg;
+  queueStrategy: string;
+}
+
+interface RunningInterval {
+  id: number;
+  interval: RustInterval;
+}
+
+interface Update {
+  id: string;
+  strategy: string;
+  msg: Msg;
 }
 
 export { Orro, Config };

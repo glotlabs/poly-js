@@ -1,18 +1,13 @@
-
 const rustEnum = {
-  withoutValue(name) {
+  withoutValue(name: string) {
     return name;
   },
 
-  tupleWithoutValue(name) {
+  tupleWithoutValue(name: string) {
     return { [name]: [] };
   },
 
-  tuple(name, values) {
-    if (!Array.isArray(values)) {
-      throw new Error("Tuple values must be an array");
-    }
-
+  tuple(name: string, values: string[]) {
     if (values.length === 0) {
       this.tupleWithoutValue(name);
     }
@@ -24,7 +19,7 @@ const rustEnum = {
     return { [name]: values };
   },
 
-  object(name, value) {
+  object(name: string, value: object) {
     if (typeof value !== "object") {
       throw new Error("Value must be an object");
     }
@@ -33,5 +28,4 @@ const rustEnum = {
   },
 };
 
-
-export { rustEnum }
+export { rustEnum };

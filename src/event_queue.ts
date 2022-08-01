@@ -1,10 +1,28 @@
+interface Job {
+  id: string;
+  strategy: string;
+  action: () => void;
+}
+
+interface Event {
+  id: string;
+  action: () => void;
+  resolve: (value: unknown) => void;
+  reject: () => void;
+}
+
+interface State {
+  queue: Event[];
+  processing: boolean;
+}
+
 class EventQueue {
-  private readonly state = {
+  private readonly state: State = {
     queue: [],
     processing: false,
   };
 
-  enqueue({ id, strategy, action }) {
+  enqueue({ id, strategy, action }: Job): void {
     if (this.state.queue.length > 100) {
       console.warn("Event queue is full, dropping event", id);
       return;
@@ -28,7 +46,7 @@ class EventQueue {
     }
   }
 
-  private async processNext() {
+  private processNext(): void {
     const event = this.state.queue.shift();
     if (!event) {
       return;
@@ -38,7 +56,7 @@ class EventQueue {
 
     try {
       event.action();
-      event.resolve();
+      event.resolve(null);
     } catch (e) {
       console.error("Failed to run action", e);
       event.reject();
