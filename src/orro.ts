@@ -18,20 +18,17 @@ interface Config {
 interface State {
   eventListeners: Map<string, EventHandler[]>;
   intervals: RunningInterval[];
-  eventQueue: EventQueue;
-  msgHandler: (msg: object) => void;
 }
 
 class Orro {
   private readonly appElem: HTMLElement;
   private readonly browser: Browser;
+  private readonly eventQueue: EventQueue = new EventQueue();
+  private msgHandler: (msg: object) => void = (_msg) => {};
 
   private readonly state: State = {
     eventListeners: new Map(),
     intervals: [],
-    // TODO: move out of state?
-    eventQueue: new EventQueue(),
-    msgHandler: (msg) => {},
   };
 
   constructor(private config: Config) {
@@ -82,7 +79,7 @@ class Orro {
 
     this.state.eventListeners = eventHandlers;
     this.state.intervals = startedIntervals;
-    this.state.msgHandler = msgHandler;
+    this.msgHandler = msgHandler;
   }
 
   updateLogic(logic: Logic) {
@@ -301,9 +298,9 @@ class Orro {
   }
 
   private queueUpdate({ id, strategy, msg }: Update) {
-    const msgHandler = this.state.msgHandler;
+    const msgHandler = this.msgHandler;
 
-    return this.state.eventQueue.enqueue({
+    return this.eventQueue.enqueue({
       id,
       strategy,
 
