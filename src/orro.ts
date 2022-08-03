@@ -231,13 +231,7 @@ class Orro {
 
     handlers
       .filter((handler) => {
-        const eventConfig = this.getEventConfig(handler.config);
-
-        if (eventConfig.matchParentElements) {
-          return elem.closest(handler.selector);
-        } else {
-          return elem.matches(handler.selector);
-        }
+        return this.shouldHandleEvent(handler, elem);
       })
       .forEach((handler) => {
         const eventConfig = this.getEventConfig(handler.config);
@@ -258,6 +252,16 @@ class Orro {
           msg,
         });
       });
+  }
+
+  private shouldHandleEvent(handler: EventHandler, elem: Element): boolean {
+    const eventConfig = this.getEventConfig(handler.config);
+
+    if (eventConfig.matchParentElements) {
+      return elem.closest(handler.selector) != null;
+    } else {
+      return elem.matches(handler.selector);
+    }
   }
 
   private getEventConfig(
