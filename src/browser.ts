@@ -1,18 +1,16 @@
+interface AbortFn {
+  abort: () => void;
+}
+
 interface Browser {
   getElementById(id: string): HTMLElement | null;
   getActiveElement(): Element | null;
   addEventListener(
     type: string,
     listener: EventListenerOrEventListenerObject,
-    options?: boolean
-  ): void;
-  removeInterval(
-    type: string,
-    listener: EventListenerOrEventListenerObject,
-    options?: boolean
-  ): void;
-  setInterval(handler: TimerHandler, timeout?: number): number;
-  clearInterval(id?: number): void;
+    useCapture?: boolean
+  ): AbortFn;
+  setInterval(handler: TimerHandler, timeout?: number): AbortFn;
 }
 
 class RealBrowser implements Browser {
@@ -27,26 +25,31 @@ class RealBrowser implements Browser {
   addEventListener(
     type: string,
     listener: EventListenerOrEventListenerObject,
-    options?: boolean
-  ): void {
-    document.addEventListener(type, listener, options);
+    useCapture?: boolean
+  ): AbortFn {
+    const controller = new AbortController();
+
+    document.addEventListener(type, listener, {
+      signal: controller.signal,
+      capture: useCapture,
+    });
+
+    return {
+      abort() {
+        controller.abort();
+      },
+    };
   }
 
-  removeInterval(
-    type: string,
-    listener: EventListenerOrEventListenerObject,
-    options?: boolean
-  ): void {
-    document.removeEventListener(type, listener, options);
-  }
+  setInterval(handler: TimerHandler, timeout?: number): AbortFn {
+    const id = window.setInterval(handler, timeout);
 
-  setInterval(handler: TimerHandler, timeout?: number): number {
-    return window.setInterval(handler, timeout);
-  }
-
-  clearInterval(id?: number): void {
-    window.clearInterval(id);
+    return {
+      abort() {
+        window.clearInterval(id);
+      },
+    };
   }
 }
 
-export { Browser, RealBrowser };
+export { Browser, RealBrowser, AbortFn };

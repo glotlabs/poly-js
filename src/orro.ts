@@ -1,5 +1,5 @@
 import morphdom from "morphdom";
-import { Browser, RealBrowser } from "./browser";
+import { AbortFn, Browser, RealBrowser } from "./browser";
 import { EventQueue } from "./event_queue";
 import {
   EventConfig,
@@ -99,7 +99,7 @@ class Orro {
   }
 
   private startInterval(interval: RustInterval): RunningInterval {
-    const intervalId = this.browser.setInterval(() => {
+    const abort = this.browser.setInterval(() => {
       this.queueUpdate({
         id: this.formatIntervalId(interval),
         strategy: interval.queueStrategy,
@@ -108,7 +108,7 @@ class Orro {
     }, interval.duration);
 
     return {
-      id: intervalId,
+      abort,
       interval,
     };
   }
@@ -145,6 +145,7 @@ class Orro {
     const currentListeners = new Map(this.state.eventListeners);
 
     eventListeners.forEach((listener) => {
+      // TODO: abort event listener
       this.removeEventListeners(currentListeners, listener.id);
     });
 
@@ -193,7 +194,7 @@ class Orro {
         return !newIds.includes(id);
       })
       .forEach((interval) => {
-        this.browser.clearInterval(interval.id);
+        interval.abort.abort();
       });
 
     // Get existing intervals that we want to keep
@@ -340,7 +341,7 @@ interface EventHandler {
 }
 
 interface RunningInterval {
-  id: number;
+  abort: AbortFn;
   interval: RustInterval;
 }
 
