@@ -1,11 +1,8 @@
-interface AbortFn {
-  abort: () => void;
-}
-
 interface Browser {
   getElementById(id: string): HTMLElement | null;
   getActiveElement(): Element | null;
   addEventListener(
+    target: ListenTarget,
     type: string,
     listener: EventListenerOrEventListenerObject,
     useCapture?: boolean
@@ -23,13 +20,14 @@ class RealBrowser implements Browser {
   }
 
   addEventListener(
+    target: ListenTarget,
     type: string,
     listener: EventListenerOrEventListenerObject,
     useCapture?: boolean
   ): AbortFn {
     const controller = new AbortController();
 
-    document.addEventListener(type, listener, {
+    getListenTarget(target).addEventListener(type, listener, {
       signal: controller.signal,
       capture: useCapture,
     });
@@ -52,4 +50,34 @@ class RealBrowser implements Browser {
   }
 }
 
-export { Browser, RealBrowser, AbortFn };
+enum ListenTarget {
+  Window,
+  Document,
+}
+
+function listenTargetFromString(str: string): ListenTarget {
+  switch (str) {
+    case "window":
+      return ListenTarget.Window;
+
+    case "document":
+      return ListenTarget.Document;
+  }
+
+  throw new Error(`Unknown listen target: ${str}`);
+}
+
+function getListenTarget(target: ListenTarget): Window | Document {
+  switch (target) {
+    case ListenTarget.Window:
+      return window;
+    case ListenTarget.Document:
+      return document;
+  }
+}
+
+interface AbortFn {
+  abort: () => void;
+}
+
+export { Browser, RealBrowser, AbortFn, listenTargetFromString };

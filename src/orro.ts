@@ -1,5 +1,10 @@
 import morphdom from "morphdom";
-import { AbortFn, Browser, RealBrowser } from "./browser";
+import {
+  AbortFn,
+  Browser,
+  listenTargetFromString,
+  RealBrowser,
+} from "./browser";
 import { EventQueue } from "./event_queue";
 import {
   ClosestSelectorMatcher,
@@ -19,7 +24,7 @@ interface Config {
 }
 
 interface State {
-  eventListeners: Map<string, ActiveEventListener>;
+  eventListeners: ActiveEventListener[];
   intervals: RunningInterval[];
 }
 
@@ -30,7 +35,7 @@ class Orro {
   private msgHandler: (msg: object) => void = (_msg) => {};
 
   private readonly state: State = {
-    eventListeners: new Map(),
+    eventListeners: [],
     intervals: [],
   };
 
@@ -74,17 +79,14 @@ class Orro {
   }
 
   initLogic(logic: Logic, msgHandler: (msg: Msg) => void) {
-    const groupedEventListeners = this.groupEventListeners(
-      logic.eventListeners
-    );
-    const startedEventListeners = this.startEventListeners(
-      groupedEventListeners
+    const startedListeners = logic.eventListeners.map((listener) =>
+      this.startEventListener(listener)
     );
 
     const intervals = logic.intervals.filter(this.isValidInterval);
     const startedIntervals = intervals.map(this.startInterval);
 
-    this.state.eventListeners = startedEventListeners;
+    this.state.eventListeners = startedListeners;
     this.state.intervals = startedIntervals;
     this.msgHandler = msgHandler;
   }
@@ -124,44 +126,55 @@ class Orro {
     return `${interval.id}-${interval.msg}-${interval.duration}`;
   }
 
-  private groupEventListeners(
-    eventListeners: RustEventListener[]
-  ): Map<string, RustEventListener[]> {
-    const groupedListeners: Map<string, RustEventListener[]> = new Map();
+  private updateEventListeners(newListeners: RustEventListener[]) {
+    const oldListeners = [...this.state.eventListeners];
 
-    eventListeners.forEach((listener) => {
-      const eventType = listener.eventType;
-      const listeners = groupedListeners.get(eventType) || [];
-      listeners.push(listener);
-      groupedListeners.set(eventType, listeners);
+    const { listenersToRemove, listenersToKeep, listenersToAdd } =
+      this.prepareEventListenersUpdate(oldListeners, newListeners);
+
+    this.stopEventListeners(listenersToRemove);
+    const addedListeners = listenersToAdd.map((listener) =>
+      this.startEventListener(listener)
+    );
+
+    this.state.eventListeners = [...listenersToKeep, ...addedListeners];
+  }
+
+  private prepareEventListenersUpdate(
+    oldListeners: ActiveEventListener[],
+    newListeners: RustEventListener[]
+  ): EventListenersUpdate {
+    const newIds = newListeners.map((listener) => listener.id);
+    const oldIds = oldListeners.map((listener) => listener.listener.id);
+
+    const listenersToRemove: ActiveEventListener[] = [];
+    const listenersToKeep: ActiveEventListener[] = [];
+    const listenersToAdd: RustEventListener[] = [];
+
+    oldListeners.forEach((listener) => {
+      if (newIds.includes(listener.listener.id)) {
+        listenersToKeep.push(listener);
+      } else {
+        listenersToRemove.push(listener);
+      }
     });
 
-    return groupedListeners;
-  }
-
-  private updateEventListeners(eventListeners: RustEventListener[]) {
-    const currentListeners = new Map(this.state.eventListeners);
-
-    // TODO: remove and abort event listeners
-
-    const handlers = this.groupEventListeners(eventListeners);
-    this.addEventHandlers(currentListeners, handlers);
-
-    this.state.eventListeners = currentListeners;
-  }
-
-  private addEventHandlers(
-    currentListeners: Map<string, ActiveEventListener>,
-    newListeners: Map<string, RustEventListener[]>
-  ) {
-    newListeners.forEach((handlers, eventType) => {
-      const activeListener = currentListeners.get(eventType);
-      if (activeListener) {
-        activeListener.handlers = activeListener.handlers.concat(handlers);
-      } else {
-        const activeListener = this.startEventListener(eventType, handlers);
-        currentListeners.set(eventType, activeListener);
+    newListeners.forEach((listener) => {
+      if (!oldIds.includes(listener.id)) {
+        listenersToAdd.push(listener);
       }
+    });
+
+    return {
+      listenersToRemove,
+      listenersToKeep,
+      listenersToAdd,
+    };
+  }
+
+  private stopEventListeners(listeners: ActiveEventListener[]) {
+    listeners.forEach((listener) => {
+      listener.abort.abort();
     });
   }
 
@@ -200,35 +213,30 @@ class Orro {
     this.state.intervals = [...continuingIntervals, ...newIntervals];
   }
 
-  private handleEvent(e: Event, eventName: string): void {
-    const activeListener = this.state.eventListeners.get(eventName);
-    if (!activeListener) {
+  private handleEvent(event: Event, listener: RustEventListener): void {
+    const matchesEvent = listener.matchers.every((matcher) => {
+      return this.matchEvent(matcher, event);
+    });
+
+    if (!matchesEvent) {
       return;
     }
 
-    activeListener.handlers
-      .filter((handler) => {
-        return handler.matchers.every((matcher) => {
-          return this.matchEvent(matcher, e);
-        });
-      })
-      .forEach((handler) => {
-        if (handler.propagation.preventDefault) {
-          e.preventDefault();
-        }
+    if (listener.propagation.preventDefault) {
+      event.preventDefault();
+    }
 
-        if (handler.propagation.stopPropagation) {
-          e.stopPropagation();
-        }
+    if (listener.propagation.stopPropagation) {
+      event.stopPropagation();
+    }
 
-        const msg = this.replaceMsgPlaceholder(handler.msg);
+    const msg = this.replaceMsgPlaceholder(listener.msg);
 
-        this.queueUpdate({
-          id: handler.selector,
-          strategy: handler.queueStrategy,
-          msg,
-        });
-      });
+    this.queueUpdate({
+      id: listener.id,
+      strategy: listener.queueStrategy,
+      msg,
+    });
   }
 
   private matchEvent(matcher: EventMatcher, event: Event): boolean {
@@ -350,45 +358,36 @@ class Orro {
     });
   }
 
-  private startEventListener(
-    eventType: string,
-    eventHandlers: RustEventListener[]
-  ): ActiveEventListener {
-    // TODO: listen on correct eventTarget
+  private startEventListener(listener: RustEventListener): ActiveEventListener {
+    const listenTarget = listenTargetFromString(listener.listenTarget);
+
     const abort = this.browser.addEventListener(
-      eventType,
-      (e) => {
-        this.handleEvent(e, eventType);
+      listenTarget,
+      listener.eventType,
+      (event) => {
+        this.handleEvent(event, listener);
       },
       true
     );
 
-    return { abort, handlers: eventHandlers };
-  }
-
-  // TODO: remove
-  private startEventListeners(
-    eventHandlers: Map<string, RustEventListener[]>
-  ): Map<string, ActiveEventListener> {
-    const entries: [string, ActiveEventListener][] = Array.from(
-      eventHandlers
-    ).map(([eventName, handlers]) => {
-      const activeListener = this.startEventListener(eventName, handlers);
-      return [eventName, activeListener];
-    });
-
-    return new Map(entries);
+    return { abort, listener };
   }
 }
 
 interface ActiveEventListener {
   abort: AbortFn;
-  handlers: RustEventListener[];
+  listener: RustEventListener;
 }
 
 interface RunningInterval {
   abort: AbortFn;
   interval: RustInterval;
+}
+
+interface EventListenersUpdate {
+  listenersToRemove: ActiveEventListener[];
+  listenersToKeep: ActiveEventListener[];
+  listenersToAdd: RustEventListener[];
 }
 
 interface Update {
