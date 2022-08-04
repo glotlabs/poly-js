@@ -21,33 +21,53 @@ interface RustInterval {
   queueStrategy: string;
 }
 
-interface RustEvent {
-  type: string;
-  config: EventConfig | KeyboardEventConfig;
-}
-
 interface RustEventListener {
   id: string;
+  listenTarget: string;
+  eventType: string;
+  matchers: EventMatcher[];
   selector: string;
-  event: RustEvent;
   msg: Msg;
+  propagation: EventPropagation;
   queueStrategy: string;
 }
 
-interface EventConfig {
-  stopPropagation: boolean;
-  preventDefault: boolean;
-  matchParentElements: boolean;
+interface EventMatcher {
+  type: string;
+  config:
+    | ExactSelectorMatcher
+    | ClosestSelectorMatcher
+    | KeyboardKeyMatcher
+    | KeyboardComboMatcher;
 }
 
-interface KeyboardEventConfig {
+interface ExactSelectorMatcher {
+  selector: string;
+}
+
+interface ClosestSelectorMatcher {
+  selector: string;
+}
+
+interface KeyboardKeyMatcher {
+  key: string;
+}
+
+interface KeyboardComboMatcher {
+  combo: KeyboardCombo;
+}
+
+interface EventPropagation {
+  stopPropagation: boolean;
+  preventDefault: boolean;
+}
+
+interface KeyboardCombo {
   key: string;
   altKey: boolean;
   ctrlKey: boolean;
   metaKey: boolean;
   shiftKey: boolean;
-  debounce: DebounceConfig;
-  event: EventConfig;
 }
 
 interface DebounceConfig {
@@ -63,7 +83,11 @@ export {
   Logic,
   RustInterval,
   RustEventListener,
-  EventConfig,
-  KeyboardEventConfig,
+  KeyboardCombo,
   DebounceConfig,
+  EventMatcher,
+  ExactSelectorMatcher,
+  ClosestSelectorMatcher,
+  KeyboardKeyMatcher,
+  KeyboardComboMatcher,
 };

@@ -2,8 +2,11 @@ import morphdom from "morphdom";
 import { AbortFn, Browser, RealBrowser } from "./browser";
 import { EventQueue } from "./event_queue";
 import {
-  EventConfig,
-  KeyboardEventConfig,
+  ClosestSelectorMatcher,
+  EventMatcher,
+  ExactSelectorMatcher,
+  KeyboardComboMatcher,
+  KeyboardKeyMatcher,
   Logic,
   Msg,
   RustEventListener,
@@ -16,7 +19,7 @@ interface Config {
 }
 
 interface State {
-  eventListeners: Map<string, EventHandler[]>;
+  eventListeners: Map<string, ActiveEventListener>;
   intervals: RunningInterval[];
 }
 
@@ -71,13 +74,17 @@ class Orro {
   }
 
   initLogic(logic: Logic, msgHandler: (msg: Msg) => void) {
-    const eventHandlers = this.prepareEventHandlers(logic.eventListeners);
-    const intervals = logic.intervals.filter(this.isValidInterval);
+    const groupedEventListeners = this.groupEventListeners(
+      logic.eventListeners
+    );
+    const startedEventListeners = this.startEventListeners(
+      groupedEventListeners
+    );
 
-    this.initEventHandlers(eventHandlers);
+    const intervals = logic.intervals.filter(this.isValidInterval);
     const startedIntervals = intervals.map(this.startInterval);
 
-    this.state.eventListeners = eventHandlers;
+    this.state.eventListeners = startedEventListeners;
     this.state.intervals = startedIntervals;
     this.msgHandler = msgHandler;
   }
@@ -117,65 +124,44 @@ class Orro {
     return `${interval.id}-${interval.msg}-${interval.duration}`;
   }
 
-  private prepareEventHandlers(
+  private groupEventListeners(
     eventListeners: RustEventListener[]
-  ): Map<string, EventHandler[]> {
-    const eventHandlers: Map<string, EventHandler[]> = new Map();
+  ): Map<string, RustEventListener[]> {
+    const groupedListeners: Map<string, RustEventListener[]> = new Map();
 
-    return eventListeners.reduce((acc, listener) => {
-      const type = listener.event.type;
+    eventListeners.forEach((listener) => {
+      const eventType = listener.eventType;
+      const listeners = groupedListeners.get(eventType) || [];
+      listeners.push(listener);
+      groupedListeners.set(eventType, listeners);
+    });
 
-      if (!acc.has(type)) {
-        acc.set(type, []);
-      }
-
-      acc.get(type)!.push({
-        config: listener.event.config,
-        id: listener.id,
-        selector: listener.selector,
-        msg: listener.msg,
-        queueStrategy: listener.queueStrategy,
-      });
-
-      return acc;
-    }, eventHandlers);
+    return groupedListeners;
   }
 
   private updateEventListeners(eventListeners: RustEventListener[]) {
     const currentListeners = new Map(this.state.eventListeners);
 
-    eventListeners.forEach((listener) => {
-      // TODO: abort event listener
-      this.removeEventListeners(currentListeners, listener.id);
-    });
+    // TODO: remove and abort event listeners
 
-    // TODO: call document.addEventListener on new event types (onclick, etc)
-    const handlers = this.prepareEventHandlers(eventListeners);
+    const handlers = this.groupEventListeners(eventListeners);
     this.addEventHandlers(currentListeners, handlers);
 
     this.state.eventListeners = currentListeners;
   }
 
   private addEventHandlers(
-    currentListeners: Map<string, EventHandler[]>,
-    eventListeners: Map<string, EventHandler[]>
+    currentListeners: Map<string, ActiveEventListener>,
+    newListeners: Map<string, RustEventListener[]>
   ) {
-    eventListeners.forEach((handlers, eventName) => {
-      const currentHandlers = currentListeners.get(eventName) || [];
-      currentListeners.set(eventName, currentHandlers.concat(handlers));
-    });
-  }
-
-  private removeEventListeners(
-    currentListeners: Map<string, EventHandler[]>,
-    id: string
-  ) {
-    currentListeners.forEach((handlers, eventName) => {
-      const filteredHandlers = handlers.filter((handler) => {
-        return handler.id !== id;
-      });
-
-      currentListeners.set(eventName, filteredHandlers);
+    newListeners.forEach((handlers, eventType) => {
+      const activeListener = currentListeners.get(eventType);
+      if (activeListener) {
+        activeListener.handlers = activeListener.handlers.concat(handlers);
+      } else {
+        const activeListener = this.startEventListener(eventType, handlers);
+        currentListeners.set(eventType, activeListener);
+      }
     });
   }
 
@@ -215,33 +201,23 @@ class Orro {
   }
 
   private handleEvent(e: Event, eventName: string): void {
-    const elem = e.target as Element;
-    const handlers = this.state.eventListeners.get(eventName);
-
-    if (this.config.debug) {
-      console.debug("ORRO DEBUG", {
-        functionName: "handleEvent",
-        eventName,
-        targetElement: elem,
-      });
-    }
-
-    if (!handlers) {
+    const activeListener = this.state.eventListeners.get(eventName);
+    if (!activeListener) {
       return;
     }
 
-    handlers
+    activeListener.handlers
       .filter((handler) => {
-        return this.shouldHandleEvent(handler, elem);
+        return handler.matchers.every((matcher) => {
+          return this.matchEvent(matcher, e);
+        });
       })
       .forEach((handler) => {
-        const eventConfig = this.getEventConfig(handler.config);
-
-        if (eventConfig.preventDefault) {
+        if (handler.propagation.preventDefault) {
           e.preventDefault();
         }
 
-        if (eventConfig.stopPropagation) {
+        if (handler.propagation.stopPropagation) {
           e.stopPropagation();
         }
 
@@ -255,24 +231,79 @@ class Orro {
       });
   }
 
-  private shouldHandleEvent(handler: EventHandler, elem: Element): boolean {
-    const eventConfig = this.getEventConfig(handler.config);
+  private matchEvent(matcher: EventMatcher, event: Event): boolean {
+    switch (matcher.type) {
+      case "exactSelector":
+        return this.matchExactSelector(
+          matcher.config as ExactSelectorMatcher,
+          event
+        );
 
-    if (eventConfig.matchParentElements) {
-      return elem.closest(handler.selector) != null;
-    } else {
-      return elem.matches(handler.selector);
+      case "closestSelector":
+        return this.matchClosestSelector(
+          matcher.config as ClosestSelectorMatcher,
+          event
+        );
+
+      case "keyboardKey":
+        return this.matchKeyboardKey(
+          matcher.config as KeyboardKeyMatcher,
+          event
+        );
+
+      case "keyboardCombo":
+        return this.matchKeyboardCombo(
+          matcher.config as KeyboardComboMatcher,
+          event
+        );
+
+      default:
+        console.warn(`Unknown matcher type: ${matcher.type}`);
     }
+
+    return false;
   }
 
-  private getEventConfig(
-    config: EventConfig | KeyboardEventConfig
-  ): EventConfig {
-    if ("event" in config) {
-      return config.event;
+  private matchExactSelector(
+    matcher: ExactSelectorMatcher,
+    event: Event
+  ): boolean {
+    const elem = event.target as Element;
+    if (!elem || !("matches" in elem)) {
+      return false;
     }
 
-    return config;
+    return elem.matches(matcher.selector);
+  }
+
+  private matchClosestSelector(
+    matcher: ClosestSelectorMatcher,
+    event: Event
+  ): boolean {
+    const elem = event.target as Element;
+    if (!elem || !("closest" in elem)) {
+      return false;
+    }
+
+    return elem.closest(matcher.selector) != null;
+  }
+
+  private matchKeyboardKey(matcher: KeyboardKeyMatcher, event: Event): boolean {
+    const e = event as KeyboardEvent;
+    if ("code" in e) {
+      return false;
+    }
+
+    return e.code === matcher.key || matcher.key == "any";
+  }
+
+  private matchKeyboardCombo(
+    matcher: KeyboardComboMatcher,
+    event: Event
+  ): boolean {
+    const e = event as KeyboardEvent;
+    // TODO: check combinations
+    return e.code === matcher.combo.key;
   }
 
   private replacePlaceholderValue(value: string) {
@@ -319,25 +350,40 @@ class Orro {
     });
   }
 
-  private initEventHandlers(eventHandlers: Map<string, EventHandler[]>) {
-    eventHandlers.forEach((_value, eventName) => {
-      this.browser.addEventListener(
-        eventName,
-        (e) => {
-          this.handleEvent(e, eventName);
-        },
-        true
-      );
+  private startEventListener(
+    eventType: string,
+    eventHandlers: RustEventListener[]
+  ): ActiveEventListener {
+    // TODO: listen on correct eventTarget
+    const abort = this.browser.addEventListener(
+      eventType,
+      (e) => {
+        this.handleEvent(e, eventType);
+      },
+      true
+    );
+
+    return { abort, handlers: eventHandlers };
+  }
+
+  // TODO: remove
+  private startEventListeners(
+    eventHandlers: Map<string, RustEventListener[]>
+  ): Map<string, ActiveEventListener> {
+    const entries: [string, ActiveEventListener][] = Array.from(
+      eventHandlers
+    ).map(([eventName, handlers]) => {
+      const activeListener = this.startEventListener(eventName, handlers);
+      return [eventName, activeListener];
     });
+
+    return new Map(entries);
   }
 }
 
-interface EventHandler {
-  config: EventConfig | KeyboardEventConfig;
-  id: string;
-  selector: string;
-  msg: Msg;
-  queueStrategy: string;
+interface ActiveEventListener {
+  abort: AbortFn;
+  handlers: RustEventListener[];
 }
 
 interface RunningInterval {
