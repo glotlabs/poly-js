@@ -7,6 +7,8 @@ import {
 } from "./browser";
 import { EventQueue } from "./event_queue";
 import {
+  CaptureType,
+  CaptureValueFromElement,
   ClosestSelectorMatcher,
   EventMatcher,
   ExactSelectorMatcher,
@@ -342,18 +344,30 @@ class Orro {
     return code === key || key === "any";
   }
 
-  private replacePlaceholderValue(value: string) {
-    if (value.startsWith("VALUE_FROM_ID:")) {
-      const elemId = value.replace("VALUE_FROM_ID:", "");
-      const elem = this.browser.getElementById(elemId) as HTMLInputElement;
-      if (elem && elem.value) {
-        return safeJsonParse(elem.value);
-      }
+  private captureValue(captureType: CaptureType): any {
+    switch (captureType.type) {
+      case "valueFromElement":
+        return this.captureValueFromElement(
+          captureType.config as CaptureValueFromElement
+        );
 
-      return "";
+      default:
+        console.warn(`Unknown capture value type: ${captureType.type}`);
     }
 
-    return value;
+    return `Failed to capture value of type '${captureType.type}'`;
+  }
+
+  private captureValueFromElement(config: CaptureValueFromElement) {
+    const elem = this.browser.getElementById(
+      config.elementId
+    ) as HTMLInputElement;
+
+    if (elem && elem.value) {
+      return safeJsonParse(elem.value);
+    }
+
+    return `Failed to capture element value from element with id: '${config.elementId}'`;
   }
 
   private replaceMsgPlaceholder(msg: Msg) {
@@ -362,8 +376,12 @@ class Orro {
     }
 
     const entries = Object.entries(msg).map(([key, value]) => {
-      const newValue = this.replacePlaceholderValue(value as string);
-      return [key, newValue];
+      if (typeof value === "object" || "type" in (value as object)) {
+        const newValue = this.captureValue(value as CaptureType);
+        return [key, newValue];
+      } else {
+        return [key, value];
+      }
     });
 
     return Object.fromEntries(entries);

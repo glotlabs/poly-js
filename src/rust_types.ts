@@ -77,6 +77,15 @@ interface DebounceConfig {
   trailing: boolean;
 }
 
+interface CaptureType {
+  type: string;
+  config: CaptureValueFromElement;
+}
+
+interface CaptureValueFromElement {
+  elementId: string;
+}
+
 export {
   Page,
   Model,
@@ -91,4 +100,6 @@ export {
   ClosestSelectorMatcher,
   KeyboardKeyMatcher,
   KeyboardComboMatcher,
+  CaptureType,
+  CaptureValueFromElement,
 };
