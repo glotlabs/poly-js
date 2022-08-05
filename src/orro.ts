@@ -132,6 +132,12 @@ class Orro {
     const { listenersToRemove, listenersToKeep, listenersToAdd } =
       this.prepareEventListenersUpdate(oldListeners, newListeners);
 
+    this.debugLog("Updating event listeners", {
+      removing: listenersToRemove,
+      keeping: listenersToKeep,
+      adding: listenersToAdd,
+    });
+
     this.stopEventListeners(listenersToRemove);
     const addedListeners = listenersToAdd.map((listener) =>
       this.startEventListener(listener)
@@ -298,11 +304,14 @@ class Orro {
 
   private matchKeyboardKey(matcher: KeyboardKeyMatcher, event: Event): boolean {
     const e = event as KeyboardEvent;
-    if ("code" in e) {
+    if (!("code" in e)) {
       return false;
     }
 
-    return e.code === matcher.key || matcher.key == "any";
+    const key = matcher.key.toLowerCase();
+    const code = e.code.toLowerCase();
+
+    return code === key || key === "any";
   }
 
   private matchKeyboardCombo(
@@ -310,8 +319,15 @@ class Orro {
     event: Event
   ): boolean {
     const e = event as KeyboardEvent;
+    if (!("code" in e)) {
+      return false;
+    }
+
     // TODO: check combinations
-    return e.code === matcher.combo.key;
+    const key = matcher.combo.key.toLowerCase();
+    const code = e.code.toLowerCase();
+
+    return code === key || key === "any";
   }
 
   private replacePlaceholderValue(value: string) {
@@ -370,7 +386,19 @@ class Orro {
       true
     );
 
+    this.debugLog("Started listener", {
+      id: listener.id,
+      eventType: listener.eventType,
+      target: listener.listenTarget,
+    });
+
     return { abort, listener };
+  }
+
+  private debugLog(msg: string, ...context: any[]): void {
+    if (this.config.debug) {
+      console.log("[ORRO]", msg, ...context);
+    }
   }
 }
 
