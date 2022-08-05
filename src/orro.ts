@@ -57,6 +57,7 @@ class Orro {
     this.appElem = appElem;
     this.browser = browser;
 
+    this.initialRender();
     this.initLogic();
   }
 
@@ -90,6 +91,11 @@ class Orro {
         return true;
       },
     });
+  }
+
+  private initialRender() {
+    const markup = this.page.viewBody(this.state.model);
+    this.updateDom(markup);
   }
 
   private initLogic() {
