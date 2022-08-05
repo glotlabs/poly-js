@@ -8,6 +8,7 @@ interface Browser {
     useCapture?: boolean
   ): AbortFn;
   setInterval(handler: TimerHandler, timeout?: number): AbortFn;
+  getWindowSize(): WindowSize;
 }
 
 class RealBrowser implements Browser {
@@ -48,6 +49,13 @@ class RealBrowser implements Browser {
       },
     };
   }
+
+  getWindowSize(): WindowSize {
+    return {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    };
+  }
 }
 
 enum ListenTarget {
@@ -80,4 +88,9 @@ interface AbortFn {
   abort: () => void;
 }
 
-export { Browser, RealBrowser, AbortFn, listenTargetFromString };
+interface WindowSize {
+  width: number;
+  height: number;
+}
+
+export { Browser, RealBrowser, AbortFn, listenTargetFromString, WindowSize };

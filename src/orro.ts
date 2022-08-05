@@ -4,6 +4,7 @@ import {
   Browser,
   listenTargetFromString,
   RealBrowser,
+  WindowSize,
 } from "./browser";
 import { EventQueue } from "./event_queue";
 import {
@@ -351,6 +352,9 @@ class Orro {
           captureType.config as CaptureValueFromElement
         );
 
+      case "windowSize":
+        return this.captureWindowSize();
+
       default:
         console.warn(`Unknown capture value type: ${captureType.type}`);
     }
@@ -368,6 +372,10 @@ class Orro {
     }
 
     return `Failed to capture element value from element with id: '${config.elementId}'`;
+  }
+
+  private captureWindowSize(): WindowSize {
+    return this.browser.getWindowSize();
   }
 
   private replaceMsgPlaceholder(msg: Msg) {
