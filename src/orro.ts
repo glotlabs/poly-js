@@ -13,17 +13,19 @@ import {
   KeyboardComboMatcher,
   KeyboardKeyMatcher,
   Logic,
+  Model,
   Msg,
+  Page,
   RustEventListener,
   RustInterval,
 } from "./rust_types";
 
 interface Config {
-  appId: string;
   debug: boolean;
 }
 
 interface State {
+  model: Model;
   eventListeners: ActiveEventListener[];
   intervals: RunningInterval[];
 }
@@ -32,22 +34,31 @@ class Orro {
   private readonly appElem: HTMLElement;
   private readonly browser: Browser;
   private readonly eventQueue: EventQueue = new EventQueue();
-  private msgHandler: (msg: object) => void = (_msg) => {};
 
   private readonly state: State = {
+    model: null,
     eventListeners: [],
     intervals: [],
   };
 
-  constructor(private config: Config) {
+  constructor(private readonly page: Page, private readonly config?: Config) {
     const browser = new RealBrowser();
-    const appElem = browser.getElementById(config.appId);
+    this.state.model = page.initialModel();
+
+    const appId = page.id();
+    const appElem = browser.getElementById(appId);
     if (!appElem) {
-      throw new Error(`Could not find element with id #${config.appId}`);
+      throw new Error(`Could not find element with id '${appId}'`);
     }
 
     this.appElem = appElem;
     this.browser = browser;
+
+    this.initLogic();
+  }
+
+  public getModel(): Model {
+    return this.state.model;
   }
 
   updateDom(markup: string) {
@@ -78,7 +89,9 @@ class Orro {
     });
   }
 
-  initLogic(logic: Logic, msgHandler: (msg: Msg) => void) {
+  private initLogic() {
+    const logic = this.page.getLogic(this.state.model);
+
     const startedListeners = logic.eventListeners.map((listener) =>
       this.startEventListener(listener)
     );
@@ -88,7 +101,6 @@ class Orro {
 
     this.state.eventListeners = startedListeners;
     this.state.intervals = startedIntervals;
-    this.msgHandler = msgHandler;
   }
 
   updateLogic(logic: Logic) {
@@ -358,18 +370,16 @@ class Orro {
   }
 
   private queueUpdate({ id, strategy, msg }: Update) {
-    const msgHandler = this.msgHandler;
-
     return this.eventQueue.enqueue({
       id,
       strategy,
 
-      action() {
+      action: () => {
         if (!msg) {
           return;
         }
 
-        msgHandler(msg);
+        this.sendMsg(msg);
       },
     });
   }
@@ -395,8 +405,18 @@ class Orro {
     return { abort, listener };
   }
 
+  public sendMsg(msg: Msg) {
+    this.state.model = this.page.update(msg, this.state.model);
+
+    const markup = this.page.viewBody(this.state.model);
+    this.updateDom(markup);
+
+    const newLogic = this.page.getLogic(this.state.model);
+    this.updateLogic(newLogic);
+  }
+
   private debugLog(msg: string, ...context: any[]): void {
-    if (this.config.debug) {
+    if (this.config?.debug === true) {
       console.log("[ORRO]", msg, ...context);
     }
   }

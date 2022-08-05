@@ -3,6 +3,7 @@ type Model = any;
 type Msg = any;
 
 interface Page {
+  id(): string;
   initialModel(): Model;
   update(msg: Msg, model: Model): Model;
   getLogic(model: Model): Logic;
