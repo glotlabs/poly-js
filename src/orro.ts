@@ -347,7 +347,7 @@ class Orro {
       const elemId = value.replace("VALUE_FROM_ID:", "");
       const elem = this.browser.getElementById(elemId) as HTMLInputElement;
       if (elem && elem.value) {
-        return elem.value;
+        return safeJsonParse(elem.value);
       }
 
       return "";
@@ -441,6 +441,15 @@ interface Update {
   id: string;
   strategy: string;
   msg: Msg;
+}
+
+function safeJsonParse(s: string) {
+  try {
+    return JSON.parse(s);
+  } catch (e) {
+    console.error(e);
+    return "";
+  }
 }
 
 export { Orro, Config };
