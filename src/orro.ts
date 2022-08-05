@@ -370,15 +370,14 @@ class Orro {
   }
 
   private queueUpdate({ id, strategy, msg }: Update) {
+    if (!msg) {
+      return;
+    }
+
     return this.eventQueue.enqueue({
       id,
       strategy,
-
       action: () => {
-        if (!msg) {
-          return;
-        }
-
         this.sendMsg(msg);
       },
     });
