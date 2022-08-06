@@ -1,3 +1,5 @@
+import { QueueStrategy } from "./rust_types";
+
 interface Job {
   config: JobConfig;
   action: () => void;
@@ -5,13 +7,13 @@ interface Job {
 
 interface JobConfig {
   id: string;
-  strategy: string;
+  strategy: QueueStrategy;
 }
 
 function defaultJobConfig(): JobConfig {
   return {
     id: "anonymous",
-    strategy: "fifo",
+    strategy: QueueStrategy.Fifo,
   };
 }
 
@@ -39,8 +41,13 @@ class EventQueue {
       return;
     }
 
-    if (strategy === "dropOlder") {
-      this.state.queue = this.state.queue.filter((item) => item.id !== id);
+    switch (strategy) {
+      case QueueStrategy.Fifo:
+        break;
+
+      case QueueStrategy.DropOlder:
+        this.state.queue = this.state.queue.filter((item) => item.id !== id);
+        break;
     }
 
     new Promise((resolve, reject) => {
@@ -78,4 +85,19 @@ class EventQueue {
   }
 }
 
-export { EventQueue, JobConfig, defaultJobConfig };
+function queueStrategyFromString(s: string) {
+  switch (s) {
+    case "fifo":
+      return QueueStrategy.Fifo;
+
+    case "dropOlder":
+      return QueueStrategy.DropOlder;
+
+    default:
+      console.error(`Unknown queue strategy: ${s}`);
+  }
+
+  return QueueStrategy.Fifo;
+}
+
+export { EventQueue, JobConfig, defaultJobConfig, queueStrategyFromString };

@@ -33,6 +33,11 @@ interface RustEventListener {
   queueStrategy: string;
 }
 
+enum QueueStrategy {
+  Fifo,
+  DropOlder,
+}
+
 interface EventMatcher {
   type: string;
   config:
@@ -102,4 +107,5 @@ export {
   KeyboardComboMatcher,
   CaptureType,
   CaptureValueFromElement,
+  QueueStrategy,
 };

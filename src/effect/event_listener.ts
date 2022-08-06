@@ -1,5 +1,5 @@
 import { AbortFn, Browser, listenTargetFromString } from "../browser";
-import { JobConfig } from "../event_queue";
+import { JobConfig, queueStrategyFromString } from "../event_queue";
 import { Logger } from "../logger";
 
 import {
@@ -105,7 +105,7 @@ class EventListenerManager {
 
     this.onMsg(listener.msg, {
       id: listener.id,
-      strategy: listener.queueStrategy,
+      strategy: queueStrategyFromString(listener.queueStrategy),
     });
   }
 

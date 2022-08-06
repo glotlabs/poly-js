@@ -69,7 +69,11 @@ class Orro {
     return this.state.model;
   }
 
-  updateDom(markup: string) {
+  public send(msg: Msg, jobConfig?: JobConfig) {
+    this.queueUpdate(msg, jobConfig ?? defaultJobConfig());
+  }
+
+  private updateDom(markup: string) {
     const focusedElement = this.browser.getActiveElement();
 
     morphdom(this.appElem, markup, {
@@ -123,10 +127,6 @@ class Orro {
     });
 
     return Object.fromEntries(entries);
-  }
-
-  public send(msg: Msg, jobConfig?: JobConfig) {
-    this.queueUpdate(msg, jobConfig ?? defaultJobConfig());
   }
 
   private queueUpdate(msg: Msg, jobConfig: JobConfig) {

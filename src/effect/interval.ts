@@ -1,5 +1,5 @@
 import { AbortFn, Browser } from "../browser";
-import { JobConfig } from "../event_queue";
+import { JobConfig, queueStrategyFromString } from "../event_queue";
 import { Logger } from "../logger";
 import { Msg, RustInterval } from "../rust_types";
 
@@ -54,7 +54,7 @@ class IntervalManager {
     const abort = this.browser.setInterval(() => {
       this.onMsg(interval.msg, {
         id: interval.id,
-        strategy: interval.queueStrategy,
+        strategy: queueStrategyFromString(interval.queueStrategy),
       });
     }, interval.duration);
 
