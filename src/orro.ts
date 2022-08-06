@@ -1,19 +1,10 @@
 import morphdom from "morphdom";
-import { AbortFn, Browser, RealBrowser } from "./browser";
+import { Browser, RealBrowser } from "./browser";
 import { groupEffects } from "./effect";
-import {
-  ActiveEventListener,
-  EventListenerManager,
-} from "./effect/event_listener";
+import { EventListenerManager } from "./effect/event_listener";
+import { IntervalManager } from "./effect/interval";
 import { EventQueue, JobConfig } from "./event_queue";
-import {
-  CaptureType,
-  Effect,
-  Model,
-  Msg,
-  Page,
-  RustInterval,
-} from "./rust_types";
+import { CaptureType, Effect, Model, Msg, Page } from "./rust_types";
 import { captureValue } from "./value";
 
 interface Config {
@@ -22,8 +13,6 @@ interface Config {
 
 interface State {
   model: Model;
-  eventListeners: ActiveEventListener[];
-  intervals: ActiveInterval[];
 }
 
 class Orro {
@@ -31,11 +20,10 @@ class Orro {
   private readonly browser: Browser;
   private readonly eventQueue: EventQueue = new EventQueue();
   private readonly eventListenerManager: EventListenerManager;
+  private readonly intervalManager: IntervalManager;
 
   private readonly state: State = {
     model: null,
-    eventListeners: [],
-    intervals: [],
   };
 
   constructor(private readonly page: Page, private readonly config?: Config) {
@@ -47,6 +35,10 @@ class Orro {
         this.queueUpdate(msg, jobConfig);
       }
     );
+
+    this.intervalManager = new IntervalManager(browser, (msg, jobConfig) => {
+      this.queueUpdate(msg, jobConfig);
+    });
 
     this.state.model = page.initialModel();
 
@@ -60,7 +52,9 @@ class Orro {
     this.browser = browser;
 
     this.initialRender();
-    this.initEffects();
+
+    const effects = this.page.getEffects(this.state.model);
+    this.handleEffects(effects);
   }
 
   public getModel(): Model {
@@ -100,88 +94,10 @@ class Orro {
     this.updateDom(markup);
   }
 
-  private initEffects() {
-    const effects = this.page.getEffects(this.state.model);
-    const groupedEffects = groupEffects(effects);
-
-    this.eventListenerManager.setEventListeners(groupedEffects.eventListeners);
-
-    const intervals = groupedEffects.intervals.filter(this.isValidInterval);
-    const startedIntervals = intervals.map(this.startInterval);
-
-    this.state.intervals = startedIntervals;
-  }
-
-  updateEffects(effects: Effect[]) {
+  private handleEffects(effects: Effect[]) {
     const groupedEffects = groupEffects(effects);
     this.eventListenerManager.setEventListeners(groupedEffects.eventListeners);
-    this.updateIntervals(groupedEffects.intervals);
-  }
-
-  private isValidInterval(interval: RustInterval): boolean {
-    if (interval.duration < 100) {
-      console.warn(
-        "Ignoring interval with low duration: ${interval.duration}ms"
-      );
-      return false;
-    }
-
-    return true;
-  }
-
-  private startInterval(interval: RustInterval): ActiveInterval {
-    const abort = this.browser.setInterval(() => {
-      this.queueUpdate(interval.msg, {
-        id: this.formatIntervalId(interval),
-        strategy: interval.queueStrategy,
-      });
-    }, interval.duration);
-
-    return {
-      abort,
-      interval,
-    };
-  }
-
-  // TODO: Set id in rust?
-  // TODO: msg can be an object
-  private formatIntervalId(interval: RustInterval) {
-    return `${interval.id}-${interval.msg}-${interval.duration}`;
-  }
-
-  private updateIntervals(intervals: RustInterval[]) {
-    const currentIntervals = this.state.intervals;
-
-    const newIds = intervals.map(this.formatIntervalId);
-    const currentIds = currentIntervals.map(({ interval }) =>
-      this.formatIntervalId(interval)
-    );
-
-    // Stop intervals that does not exist anymore
-    currentIntervals
-      .filter(({ interval }) => {
-        const id = this.formatIntervalId(interval);
-        return !newIds.includes(id);
-      })
-      .forEach((interval) => {
-        interval.abort.abort();
-      });
-
-    // Get existing intervals that we want to keep
-    const continuingIntervals = currentIntervals.filter(({ interval }) => {
-      const id = this.formatIntervalId(interval);
-      return newIds.includes(id);
-    });
-
-    // Start new intervals
-    const newIntervals = intervals
-      .filter((interval) => {
-        const id = this.formatIntervalId(interval);
-        return !currentIds.includes(id);
-      })
-      .map(this.startInterval);
-
-    this.state.intervals = [...continuingIntervals, ...newIntervals];
+    this.intervalManager.setIntervals(groupedEffects.intervals);
   }
 
   private replaceMsgPlaceholder(msg: Msg) {
@@ -222,7 +138,7 @@ class Orro {
     this.updateDom(markup);
 
     const newEffects = this.page.getEffects(this.state.model);
-    this.updateEffects(newEffects);
+    this.handleEffects(newEffects);
   }
 
   private debugLog(msg: string, ...context: any[]): void {
@@ -230,11 +146,6 @@ class Orro {
       console.log("[ORRO]", msg, ...context);
     }
   }
-}
-
-interface ActiveInterval {
-  abort: AbortFn;
-  interval: RustInterval;
 }
 
 export { Orro, Config };

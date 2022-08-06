@@ -72,7 +72,10 @@ class EventListenerManager {
     //  target: listener.listenTarget,
     //});
 
-    return { abort, listener };
+    return {
+      abort,
+      listener,
+    };
   }
 
   private stopEventListeners(listeners: ActiveEventListener[]) {
