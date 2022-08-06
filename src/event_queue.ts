@@ -1,7 +1,11 @@
 interface Job {
+  config: JobConfig;
+  action: () => void;
+}
+
+interface JobConfig {
   id: string;
   strategy: string;
-  action: () => void;
 }
 
 interface Event {
@@ -22,7 +26,7 @@ class EventQueue {
     processing: false,
   };
 
-  enqueue({ id, strategy, action }: Job): void {
+  enqueue({ config: { id, strategy }, action }: Job): void {
     if (this.state.queue.length > 100) {
       console.warn("Event queue is full, dropping event", id);
       return;
@@ -67,4 +71,4 @@ class EventQueue {
   }
 }
 
-export { EventQueue };
+export { EventQueue, JobConfig };
