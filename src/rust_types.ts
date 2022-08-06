@@ -6,11 +6,11 @@ interface Page {
   id(): string;
   initialModel(): Model;
   update(msg: Msg, model: Model): Model;
-  getEffects(model: Model): Effect[];
+  getSubscriptions(model: Model): Subscription[];
   viewBody(model: Model): string;
 }
 
-interface Effect {
+interface Subscription {
   type: string;
   config: RustEventListener | RustInterval;
 }
@@ -95,7 +95,7 @@ export {
   Page,
   Model,
   Msg,
-  Effect,
+  Subscription,
   RustInterval,
   RustEventListener,
   KeyboardCombo,

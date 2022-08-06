@@ -1,11 +1,11 @@
 import morphdom from "morphdom";
 import { Browser, RealBrowser } from "./browser";
-import { groupEffects } from "./effect";
-import { EventListenerManager } from "./effect/event_listener";
-import { IntervalManager } from "./effect/interval";
+import { groupSubscriptions } from "./subscription";
+import { EventListenerManager } from "./subscription/event_listener";
+import { IntervalManager } from "./subscription/interval";
 import { defaultJobConfig, EventQueue, JobConfig } from "./event_queue";
 import { BrowserLogger, Logger } from "./logger";
-import { CaptureType, Effect, Model, Msg, Page } from "./rust_types";
+import { CaptureType, Subscription, Model, Msg, Page } from "./rust_types";
 import { captureValue } from "./value";
 
 interface Config {
@@ -62,8 +62,8 @@ class Polyester {
     this.state.model = page.initialModel();
     this.initialRender();
 
-    const effects = this.page.getEffects(this.state.model);
-    this.handleEffects(effects);
+    const subscriptions = this.page.getSubscriptions(this.state.model);
+    this.handleSubscriptions(subscriptions);
   }
 
   public getModel(): Model {
@@ -107,10 +107,12 @@ class Polyester {
     this.updateDom(markup);
   }
 
-  private handleEffects(effects: Effect[]) {
-    const groupedEffects = groupEffects(effects, this.logger);
-    this.eventListenerManager.setEventListeners(groupedEffects.eventListeners);
-    this.intervalManager.setIntervals(groupedEffects.intervals);
+  private handleSubscriptions(subscriptions: Subscription[]) {
+    const groupedSubscriptions = groupSubscriptions(subscriptions, this.logger);
+    this.eventListenerManager.setEventListeners(
+      groupedSubscriptions.eventListeners
+    );
+    this.intervalManager.setIntervals(groupedSubscriptions.intervals);
   }
 
   private replaceMsgPlaceholder(msg: Msg) {
@@ -155,8 +157,8 @@ class Polyester {
     const markup = this.page.viewBody(this.state.model);
     this.updateDom(markup);
 
-    const newEffects = this.page.getEffects(this.state.model);
-    this.handleEffects(newEffects);
+    const newSubscriptions = this.page.getSubscriptions(this.state.model);
+    this.handleSubscriptions(newSubscriptions);
   }
 }
 
