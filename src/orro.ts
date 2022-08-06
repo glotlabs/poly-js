@@ -29,6 +29,15 @@ class Orro {
   constructor(private readonly page: Page, private readonly config?: Config) {
     const browser = new RealBrowser();
 
+    const appId = page.id();
+    const appElem = browser.getElementById(appId);
+    if (!appElem) {
+      throw new Error(`Could not find element with id '${appId}'`);
+    }
+
+    this.appElem = appElem;
+    this.browser = browser;
+
     this.eventListenerManager = new EventListenerManager(
       browser,
       (msg, jobConfig) => {
@@ -41,16 +50,6 @@ class Orro {
     });
 
     this.state.model = page.initialModel();
-
-    const appId = page.id();
-    const appElem = browser.getElementById(appId);
-    if (!appElem) {
-      throw new Error(`Could not find element with id '${appId}'`);
-    }
-
-    this.appElem = appElem;
-    this.browser = browser;
-
     this.initialRender();
 
     const effects = this.page.getEffects(this.state.model);
