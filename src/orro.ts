@@ -30,7 +30,7 @@ interface Config {
 interface State {
   model: Model;
   eventListeners: ActiveEventListener[];
-  intervals: RunningInterval[];
+  intervals: ActiveInterval[];
 }
 
 class Orro {
@@ -128,7 +128,7 @@ class Orro {
     return true;
   }
 
-  private startInterval(interval: RustInterval): RunningInterval {
+  private startInterval(interval: RustInterval): ActiveInterval {
     const abort = this.browser.setInterval(() => {
       this.queueUpdate({
         id: this.formatIntervalId(interval),
@@ -458,7 +458,7 @@ interface ActiveEventListener {
   listener: RustEventListener;
 }
 
-interface RunningInterval {
+interface ActiveInterval {
   abort: AbortFn;
   interval: RustInterval;
 }
