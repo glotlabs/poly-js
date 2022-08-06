@@ -3,7 +3,7 @@ import { Browser, RealBrowser } from "./browser";
 import { groupEffects } from "./effect";
 import { EventListenerManager } from "./effect/event_listener";
 import { IntervalManager } from "./effect/interval";
-import { EventQueue, JobConfig } from "./event_queue";
+import { defaultJobConfig, EventQueue, JobConfig } from "./event_queue";
 import { BrowserLogger, Logger } from "./logger";
 import { CaptureType, Effect, Model, Msg, Page } from "./rust_types";
 import { captureValue } from "./value";
@@ -109,12 +109,12 @@ class Orro {
   }
 
   private replaceMsgPlaceholder(msg: Msg) {
-    if (typeof msg !== "object") {
+    if (!isObject(msg)) {
       return msg;
     }
 
     const entries = Object.entries(msg).map(([key, value]) => {
-      if (typeof value === "object" || "type" in (value as object)) {
+      if (isObject(msg) && "type" in Object(value)) {
         const newValue = captureValue(this.browser, value as CaptureType);
         return [key, newValue];
       } else {
@@ -125,6 +125,10 @@ class Orro {
     return Object.fromEntries(entries);
   }
 
+  public send(msg: Msg, jobConfig?: JobConfig) {
+    this.queueUpdate(msg, jobConfig ?? defaultJobConfig());
+  }
+
   private queueUpdate(msg: Msg, jobConfig: JobConfig) {
     if (!msg) {
       return;
@@ -133,14 +137,14 @@ class Orro {
     return this.eventQueue.enqueue({
       config: jobConfig,
       action: () => {
-        const realMsg = this.replaceMsgPlaceholder(msg);
-        this.update(realMsg);
+        this.update(msg);
       },
     });
   }
 
-  public update(msg: Msg) {
-    this.state.model = this.page.update(msg, this.state.model);
+  private update(msg: Msg) {
+    const realMsg = this.replaceMsgPlaceholder(msg);
+    this.state.model = this.page.update(realMsg, this.state.model);
 
     const markup = this.page.viewBody(this.state.model);
     this.updateDom(markup);
@@ -148,6 +152,10 @@ class Orro {
     const newEffects = this.page.getEffects(this.state.model);
     this.handleEffects(newEffects);
   }
+}
+
+function isObject(obj: any) {
+  return obj === Object(obj);
 }
 
 export { Orro, Config };

@@ -8,6 +8,13 @@ interface JobConfig {
   strategy: string;
 }
 
+function defaultJobConfig(): JobConfig {
+  return {
+    id: "anonymous",
+    strategy: "fifo",
+  };
+}
+
 interface Event {
   id: string;
   action: () => void;
@@ -17,13 +24,13 @@ interface Event {
 
 interface State {
   queue: Event[];
-  processing: boolean;
+  isProcessing: boolean;
 }
 
 class EventQueue {
   private readonly state: State = {
     queue: [],
-    processing: false,
+    isProcessing: false,
   };
 
   enqueue({ config: { id, strategy }, action }: Job): void {
@@ -45,7 +52,7 @@ class EventQueue {
       });
     });
 
-    if (!this.state.processing) {
+    if (!this.state.isProcessing) {
       this.processNext();
     }
   }
@@ -56,7 +63,7 @@ class EventQueue {
       return;
     }
 
-    this.state.processing = true;
+    this.state.isProcessing = true;
 
     try {
       event.action();
@@ -66,9 +73,9 @@ class EventQueue {
       event.reject();
     }
 
-    this.state.processing = false;
+    this.state.isProcessing = false;
     this.processNext();
   }
 }
 
-export { EventQueue, JobConfig };
+export { EventQueue, JobConfig, defaultJobConfig };
