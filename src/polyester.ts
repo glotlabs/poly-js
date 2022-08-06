@@ -16,7 +16,7 @@ interface State {
   model: Model;
 }
 
-class Orro {
+class Polyester {
   private readonly appElem: HTMLElement;
   private readonly browser: Browser;
   private readonly logger: Logger;
@@ -164,4 +164,4 @@ function isObject(obj: any) {
   return obj === Object(obj);
 }
 
-export { Orro, Config };
+export { Polyester, Config };

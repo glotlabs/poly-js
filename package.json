@@ -1,13 +1,13 @@
 {
-  "name": "orro",
+  "name": "polyester",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
     "bundle": "npm run bundle-dev && npm run bundle-prod",
-    "bundle-dev": "esbuild src/orro.ts --bundle --format=esm --target=es2020 --outfile=dist/orro-dev.js",
-    "bundle-prod": "esbuild src/orro.ts --bundle --minify --format=esm --target=es2020 --outfile=dist/orro-prod.js"
+    "bundle-dev": "esbuild src/polyester.ts --bundle --format=esm --target=es2020 --outfile=dist/polyester-dev.js",
+    "bundle-prod": "esbuild src/polyester.ts --bundle --minify --format=esm --target=es2020 --outfile=dist/polyester-prod.js"
   },
   "author": "Petter Rasmussen",
   "license": "MIT",

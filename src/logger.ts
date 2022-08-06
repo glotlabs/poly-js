@@ -4,7 +4,7 @@ interface Logger {
   error(message: string, ...context: any[]): void;
 }
 
-const PREFIX = "[ORRO]";
+const PREFIX = "[POLYESTER]";
 
 interface Config {
   debug: boolean;
