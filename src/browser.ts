@@ -5,7 +5,7 @@ interface Browser {
     target: ListenTarget,
     type: string,
     listener: EventListenerOrEventListenerObject,
-    useCapture?: boolean
+    config: ListenConfig
   ): AbortFn;
   setInterval(handler: TimerHandler, timeout?: number): AbortFn;
   getWindowSize(): WindowSize;
@@ -24,13 +24,15 @@ class RealBrowser implements Browser {
     target: ListenTarget,
     type: string,
     listener: EventListenerOrEventListenerObject,
-    useCapture?: boolean
+    config: ListenConfig
   ): AbortFn {
     const controller = new AbortController();
+    const listenTarget = getListenTarget(target);
 
-    getListenTarget(target).addEventListener(type, listener, {
+    listenTarget.addEventListener(type, listener, {
       signal: controller.signal,
-      capture: useCapture,
+      capture: config.capture,
+      passive: config.passive,
     });
 
     return {
@@ -82,6 +84,11 @@ function getListenTarget(target: ListenTarget): Window | Document {
     case ListenTarget.Document:
       return document;
   }
+}
+
+interface ListenConfig {
+  capture: boolean;
+  passive: boolean;
 }
 
 interface AbortFn {

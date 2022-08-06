@@ -424,7 +424,10 @@ class Orro {
       (event) => {
         this.handleEvent(event, listener);
       },
-      true
+      {
+        capture: true,
+        passive: !listener.propagation.preventDefault,
+      }
     );
 
     this.debugLog("Started listener", {
