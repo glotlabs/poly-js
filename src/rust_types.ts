@@ -6,13 +6,13 @@ interface Page {
   id(): string;
   initialModel(): Model;
   update(msg: Msg, model: Model): Model;
-  getLogic(model: Model): Logic;
+  getEffects(model: Model): Effect[];
   viewBody(model: Model): string;
 }
 
-interface Logic {
-  eventListeners: RustEventListener[];
-  intervals: RustInterval[];
+interface Effect {
+  type: string;
+  config: RustEventListener | RustInterval;
 }
 
 interface RustInterval {
@@ -90,7 +90,7 @@ export {
   Page,
   Model,
   Msg,
-  Logic,
+  Effect,
   RustInterval,
   RustEventListener,
   KeyboardCombo,

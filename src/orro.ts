@@ -11,11 +11,11 @@ import {
   CaptureType,
   CaptureValueFromElement,
   ClosestSelectorMatcher,
+  Effect,
   EventMatcher,
   ExactSelectorMatcher,
   KeyboardComboMatcher,
   KeyboardKeyMatcher,
-  Logic,
   Model,
   Msg,
   Page,
@@ -58,7 +58,7 @@ class Orro {
     this.browser = browser;
 
     this.initialRender();
-    this.initLogic();
+    this.initEffects();
   }
 
   public getModel(): Model {
@@ -98,23 +98,25 @@ class Orro {
     this.updateDom(markup);
   }
 
-  private initLogic() {
-    const logic = this.page.getLogic(this.state.model);
+  private initEffects() {
+    const effects = this.page.getEffects(this.state.model);
+    const groupedEffects = groupEffects(effects);
 
-    const startedListeners = logic.eventListeners.map((listener) =>
+    const startedListeners = groupedEffects.eventListeners.map((listener) =>
       this.startEventListener(listener)
     );
 
-    const intervals = logic.intervals.filter(this.isValidInterval);
+    const intervals = groupedEffects.intervals.filter(this.isValidInterval);
     const startedIntervals = intervals.map(this.startInterval);
 
     this.state.eventListeners = startedListeners;
     this.state.intervals = startedIntervals;
   }
 
-  updateLogic(logic: Logic) {
-    this.updateEventListeners(logic.eventListeners);
-    this.updateIntervals(logic.intervals);
+  updateEffects(effects: Effect[]) {
+    const groupedEffects = groupEffects(effects);
+    this.updateEventListeners(groupedEffects.eventListeners);
+    this.updateIntervals(groupedEffects.intervals);
   }
 
   private isValidInterval(interval: RustInterval): boolean {
@@ -445,8 +447,8 @@ class Orro {
     const markup = this.page.viewBody(this.state.model);
     this.updateDom(markup);
 
-    const newLogic = this.page.getLogic(this.state.model);
-    this.updateLogic(newLogic);
+    const newEffects = this.page.getEffects(this.state.model);
+    this.updateEffects(newEffects);
   }
 
   private debugLog(msg: string, ...context: any[]): void {
@@ -454,6 +456,35 @@ class Orro {
       console.log("[ORRO]", msg, ...context);
     }
   }
+}
+
+interface GroupedEffects {
+  eventListeners: RustEventListener[];
+  intervals: RustInterval[];
+}
+
+function groupEffects(effects: Effect[]): GroupedEffects {
+  const groupedEffects: GroupedEffects = { eventListeners: [], intervals: [] };
+
+  effects.forEach((effect) => {
+    switch (effect.type) {
+      case "eventListener":
+        groupedEffects.eventListeners.push(effect.config as RustEventListener);
+        break;
+
+      case "interval":
+        groupedEffects.intervals.push(effect.config as RustInterval);
+        break;
+
+      case "none":
+        break;
+
+      default:
+        console.warn(`Unknown effect type: ${effect.type}`);
+    }
+  });
+
+  return groupedEffects;
 }
 
 interface ActiveEventListener {
