@@ -54,7 +54,7 @@ class IntervalManager {
     const abort = this.browser.setInterval(() => {
       this.onMsg(interval.msg, {
         id: interval.id,
-        strategy: queueStrategyFromString(interval.queueStrategy),
+        strategy: queueStrategyFromString(interval.queueStrategy, this.logger),
       });
     }, interval.duration);
 

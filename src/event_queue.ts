@@ -1,3 +1,4 @@
+import { Logger } from "./logger";
 import { QueueStrategy } from "./rust_types";
 
 interface Job {
@@ -35,9 +36,11 @@ class EventQueue {
     isProcessing: false,
   };
 
-  enqueue({ config: { id, strategy }, action }: Job): void {
+  constructor(private readonly logger: Logger) {}
+
+  public enqueue({ config: { id, strategy }, action }: Job): void {
     if (this.state.queue.length > 100) {
-      console.warn("Event queue is full, dropping event", id);
+      this.logger.warn("Event queue is full, dropping event", { id });
       return;
     }
 
@@ -76,7 +79,7 @@ class EventQueue {
       event.action();
       event.resolve(null);
     } catch (e) {
-      console.error("Failed to run action", e);
+      this.logger.error("Failed to run action", { exception: e });
       event.reject();
     }
 
@@ -85,8 +88,8 @@ class EventQueue {
   }
 }
 
-function queueStrategyFromString(s: string) {
-  switch (s) {
+function queueStrategyFromString(strategy: string, logger: Logger) {
+  switch (strategy) {
     case "fifo":
       return QueueStrategy.Fifo;
 
@@ -94,7 +97,7 @@ function queueStrategyFromString(s: string) {
       return QueueStrategy.DropOlder;
 
     default:
-      console.error(`Unknown queue strategy: ${s}`);
+      logger.error("Unknown queue strategy", { strategy });
   }
 
   return QueueStrategy.Fifo;

@@ -20,7 +20,7 @@ class Orro {
   private readonly appElem: HTMLElement;
   private readonly browser: Browser;
   private readonly logger: Logger;
-  private readonly eventQueue: EventQueue = new EventQueue();
+  private readonly eventQueue: EventQueue;
   private readonly eventListenerManager: EventListenerManager;
   private readonly intervalManager: IntervalManager;
 
@@ -33,6 +33,7 @@ class Orro {
     this.logger = new BrowserLogger({
       debug: config?.debug ?? false,
     });
+    this.eventQueue = new EventQueue(this.logger);
 
     const appId = page.id();
     const appElem = this.browser.getElementById(appId);
@@ -107,7 +108,7 @@ class Orro {
   }
 
   private handleEffects(effects: Effect[]) {
-    const groupedEffects = groupEffects(effects);
+    const groupedEffects = groupEffects(effects, this.logger);
     this.eventListenerManager.setEventListeners(groupedEffects.eventListeners);
     this.intervalManager.setIntervals(groupedEffects.intervals);
   }
@@ -119,7 +120,12 @@ class Orro {
 
     const entries = Object.entries(msg).map(([key, value]) => {
       if (isObject(msg) && "type" in Object(value)) {
-        const newValue = captureValue(this.browser, value as CaptureType);
+        const newValue = captureValue(
+          this.browser,
+          value as CaptureType,
+          this.logger
+        );
+
         return [key, newValue];
       } else {
         return [key, value];

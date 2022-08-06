@@ -105,7 +105,7 @@ class EventListenerManager {
 
     this.onMsg(listener.msg, {
       id: listener.id,
-      strategy: queueStrategyFromString(listener.queueStrategy),
+      strategy: queueStrategyFromString(listener.queueStrategy, this.logger),
     });
   }
 
@@ -136,7 +136,7 @@ class EventListenerManager {
         );
 
       default:
-        console.warn(`Unknown matcher type: ${matcher.type}`);
+        this.logger.warn(`Unknown matcher type: ${matcher.type}`);
     }
 
     return false;

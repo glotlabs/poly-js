@@ -20,15 +20,11 @@ class BrowserLogger implements Logger {
   }
 
   public warn(message: string, ...context: any[]): void {
-    if (this.config.debug === true) {
-      console.warn(PREFIX, message, ...context);
-    }
+    console.warn(PREFIX, message, ...context);
   }
 
   public error(message: string, ...context: any[]): void {
-    if (this.config.debug === true) {
-      console.error(PREFIX, message, ...context);
-    }
+    console.error(PREFIX, message, ...context);
   }
 }
 

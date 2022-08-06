@@ -1,3 +1,4 @@
+import { Logger } from "./logger";
 import { Effect, RustEventListener, RustInterval } from "./rust_types";
 
 interface GroupedEffects {
@@ -5,7 +6,7 @@ interface GroupedEffects {
   intervals: RustInterval[];
 }
 
-function groupEffects(effects: Effect[]): GroupedEffects {
+function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
   const groupedEffects: GroupedEffects = { eventListeners: [], intervals: [] };
 
   effects.forEach((effect) => {
@@ -22,7 +23,7 @@ function groupEffects(effects: Effect[]): GroupedEffects {
         break;
 
       default:
-        console.warn(`Unknown effect type: ${effect.type}`);
+        logger.warn("Unknown effect type", { type: effect.type });
     }
   });
 
