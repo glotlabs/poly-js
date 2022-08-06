@@ -4,6 +4,7 @@ import { groupEffects } from "./effect";
 import { EventListenerManager } from "./effect/event_listener";
 import { IntervalManager } from "./effect/interval";
 import { EventQueue, JobConfig } from "./event_queue";
+import { BrowserLogger, Logger } from "./logger";
 import { CaptureType, Effect, Model, Msg, Page } from "./rust_types";
 import { captureValue } from "./value";
 
@@ -18,6 +19,7 @@ interface State {
 class Orro {
   private readonly appElem: HTMLElement;
   private readonly browser: Browser;
+  private readonly logger: Logger;
   private readonly eventQueue: EventQueue = new EventQueue();
   private readonly eventListenerManager: EventListenerManager;
   private readonly intervalManager: IntervalManager;
@@ -27,27 +29,34 @@ class Orro {
   };
 
   constructor(private readonly page: Page, private readonly config?: Config) {
-    const browser = new RealBrowser();
+    this.browser = new RealBrowser();
+    this.logger = new BrowserLogger({
+      debug: config?.debug ?? false,
+    });
 
     const appId = page.id();
-    const appElem = browser.getElementById(appId);
+    const appElem = this.browser.getElementById(appId);
     if (!appElem) {
       throw new Error(`Could not find element with id '${appId}'`);
     }
 
     this.appElem = appElem;
-    this.browser = browser;
 
     this.eventListenerManager = new EventListenerManager(
-      browser,
+      this.browser,
+      this.logger,
       (msg, jobConfig) => {
         this.queueUpdate(msg, jobConfig);
       }
     );
 
-    this.intervalManager = new IntervalManager(browser, (msg, jobConfig) => {
-      this.queueUpdate(msg, jobConfig);
-    });
+    this.intervalManager = new IntervalManager(
+      this.browser,
+      this.logger,
+      (msg, jobConfig) => {
+        this.queueUpdate(msg, jobConfig);
+      }
+    );
 
     this.state.model = page.initialModel();
     this.initialRender();
@@ -138,12 +147,6 @@ class Orro {
 
     const newEffects = this.page.getEffects(this.state.model);
     this.handleEffects(newEffects);
-  }
-
-  private debugLog(msg: string, ...context: any[]): void {
-    if (this.config?.debug === true) {
-      console.log("[ORRO]", msg, ...context);
-    }
   }
 }
 

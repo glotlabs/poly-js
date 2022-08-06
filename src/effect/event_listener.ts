@@ -1,5 +1,6 @@
 import { AbortFn, Browser, listenTargetFromString } from "../browser";
 import { JobConfig } from "../event_queue";
+import { Logger } from "../logger";
 
 import {
   Msg,
@@ -27,6 +28,7 @@ class EventListenerManager {
 
   constructor(
     private readonly browser: Browser,
+    private readonly logger: Logger,
     private readonly onMsg: (msg: Msg, jobConfig: JobConfig) => void
   ) {}
 
@@ -36,11 +38,11 @@ class EventListenerManager {
     const { listenersToRemove, listenersToKeep, listenersToAdd } =
       prepareEventListenersDelta(oldListeners, newListeners);
 
-    //this.debugLog("Updating event listeners", {
-    //  removing: listenersToRemove,
-    //  keeping: listenersToKeep,
-    //  adding: listenersToAdd,
-    //});
+    this.logger.debug("Updating event listeners", {
+      removing: listenersToRemove,
+      keeping: listenersToKeep,
+      adding: listenersToAdd,
+    });
 
     this.stopEventListeners(listenersToRemove);
 
@@ -66,11 +68,11 @@ class EventListenerManager {
       }
     );
 
-    //this.debugLog("Started listener", {
-    //  id: listener.id,
-    //  eventType: listener.eventType,
-    //  target: listener.listenTarget,
-    //});
+    this.logger.debug("Started listener", {
+      id: listener.id,
+      eventType: listener.eventType,
+      target: listener.listenTarget,
+    });
 
     return {
       abort,

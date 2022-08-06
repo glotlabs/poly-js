@@ -1,5 +1,6 @@
 import { AbortFn, Browser } from "../browser";
 import { JobConfig } from "../event_queue";
+import { Logger } from "../logger";
 import { Msg, RustInterval } from "../rust_types";
 
 interface ActiveInterval {
@@ -18,6 +19,7 @@ class IntervalManager {
 
   constructor(
     private readonly browser: Browser,
+    private readonly logger: Logger,
     private readonly onMsg: (msg: Msg, jobConfig: JobConfig) => void
   ) {}
 
@@ -27,11 +29,11 @@ class IntervalManager {
     const { intervalsToRemove, intervalsToKeep, intervalsToAdd } =
       prepareIntervalsDelta(oldIntervals, newIntervals);
 
-    //this.debugLog("Updating intervals", {
-    //  removing: intervalsToRemove,
-    //  keeping: intervalsToKeep,
-    //  adding: intervalsToAdd,
-    //});
+    this.logger.debug("Updating intervals", {
+      removing: intervalsToRemove,
+      keeping: intervalsToKeep,
+      adding: intervalsToAdd,
+    });
 
     this.stopIntervals(intervalsToRemove);
 
