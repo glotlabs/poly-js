@@ -9,18 +9,20 @@ interface Browser {
   ): AbortFn;
   setInterval(handler: TimerHandler, timeout?: number): AbortFn;
   getWindowSize(): WindowSize;
+  pushUrl(url: string): void;
+  replaceUrl(url: string): void;
 }
 
 class RealBrowser implements Browser {
-  getElementById(id: string): HTMLElement | null {
+  public getElementById(id: string): HTMLElement | null {
     return document.getElementById(id);
   }
 
-  getActiveElement(): Element | null {
+  public getActiveElement(): Element | null {
     return document.activeElement;
   }
 
-  addEventListener(
+  public addEventListener(
     target: ListenTarget,
     type: string,
     listener: EventListenerOrEventListenerObject,
@@ -42,7 +44,7 @@ class RealBrowser implements Browser {
     };
   }
 
-  setInterval(handler: TimerHandler, timeout?: number): AbortFn {
+  public setInterval(handler: TimerHandler, timeout?: number): AbortFn {
     const id = window.setInterval(handler, timeout);
 
     return {
@@ -52,11 +54,19 @@ class RealBrowser implements Browser {
     };
   }
 
-  getWindowSize(): WindowSize {
+  public getWindowSize(): WindowSize {
     return {
       width: window.innerWidth,
       height: window.innerHeight,
     };
+  }
+
+  public pushUrl(url: string): void {
+    history.pushState({}, "", url);
+  }
+
+  public replaceUrl(url: string): void {
+    history.replaceState({}, "", url);
   }
 }
 

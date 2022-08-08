@@ -17,10 +17,10 @@ interface ModelAndEffects {
 
 interface Effect {
   type: string;
-  config: Navigation;
+  config: NavigationEffect;
 }
 
-interface Navigation {
+interface NavigationEffect {
   type: string;
   config: string;
 }
@@ -123,4 +123,6 @@ export {
   CaptureType,
   CaptureValueFromElement,
   QueueStrategy,
+  Effect,
+  NavigationEffect,
 };

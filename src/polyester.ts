@@ -5,8 +5,17 @@ import { EventListenerManager } from "./subscription/event_listener";
 import { IntervalManager } from "./subscription/interval";
 import { defaultJobConfig, EventQueue, JobConfig } from "./event_queue";
 import { BrowserLogger, Logger } from "./logger";
-import { CaptureType, Subscription, Model, Msg, Page } from "./rust_types";
+import {
+  CaptureType,
+  Subscription,
+  Model,
+  Msg,
+  Page,
+  Effect,
+} from "./rust_types";
 import { captureValue } from "./value";
+import { groupEffects } from "./effect";
+import { NavigationEffectHandler } from "./effect/navigation";
 
 interface Config {
   debug: boolean;
@@ -23,6 +32,7 @@ class Polyester {
   private readonly eventQueue: EventQueue;
   private readonly eventListenerManager: EventListenerManager;
   private readonly intervalManager: IntervalManager;
+  private readonly navigationEffectHandler: NavigationEffectHandler;
 
   private readonly state: State = {
     model: null,
@@ -59,12 +69,18 @@ class Polyester {
       }
     );
 
+    this.navigationEffectHandler = new NavigationEffectHandler(
+      this.browser,
+      this.logger
+    );
+
     const { model, effects } = page.init();
     this.state.model = model;
     this.initialRender();
 
     const subscriptions = this.page.getSubscriptions(this.state.model);
     this.handleSubscriptions(subscriptions);
+    this.handleEffects(effects);
   }
 
   public getModel(): Model {
@@ -106,6 +122,13 @@ class Polyester {
   private initialRender() {
     const markup = this.page.viewBody(this.state.model);
     this.updateDom(markup);
+  }
+
+  private handleEffects(effects: Effect[]) {
+    const groupedEffects = groupEffects(effects, this.logger);
+    groupedEffects.navigationEffects.forEach((effect) => {
+      this.navigationEffectHandler.handle(effect);
+    });
   }
 
   private handleSubscriptions(subscriptions: Subscription[]) {
@@ -162,6 +185,7 @@ class Polyester {
 
     const newSubscriptions = this.page.getSubscriptions(this.state.model);
     this.handleSubscriptions(newSubscriptions);
+    this.handleEffects(effects);
   }
 }
 

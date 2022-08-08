@@ -136,7 +136,7 @@ class EventListenerManager {
         );
 
       default:
-        this.logger.warn(`Unknown matcher type: ${matcher.type}`);
+        this.logger.warn("Unknown matcher type", { type: matcher.type });
     }
 
     return false;
