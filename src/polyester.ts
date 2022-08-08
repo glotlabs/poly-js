@@ -1,11 +1,9 @@
 import morphdom from "morphdom";
 import { Browser, RealBrowser } from "./browser";
-import { groupSubscriptions } from "./subscription";
-import { EventListenerManager } from "./subscription/event_listener";
-import { IntervalManager } from "./subscription/interval";
+import { SubscriptionManager } from "./subscription";
 import { defaultJobConfig, EventQueue, JobConfig } from "./event_queue";
 import { BrowserLogger, Logger } from "./logger";
-import { CaptureType, Subscription, Model, Msg, Page } from "./rust_types";
+import { CaptureType, Model, Msg, Page } from "./rust_types";
 import { captureValue } from "./value";
 import { EffectHandler } from "./effect";
 
@@ -22,8 +20,7 @@ class Polyester {
   private readonly browser: Browser;
   private readonly logger: Logger;
   private readonly eventQueue: EventQueue;
-  private readonly eventListenerManager: EventListenerManager;
-  private readonly intervalManager: IntervalManager;
+  private readonly subscriptionManager: SubscriptionManager;
   private readonly effectHandler: EffectHandler;
 
   private readonly state: State = {
@@ -35,8 +32,6 @@ class Polyester {
     this.logger = new BrowserLogger({
       debug: config?.debug ?? false,
     });
-    this.eventQueue = new EventQueue(this.logger);
-
     const appId = page.id();
     const appElem = this.browser.getElementById(appId);
     if (!appElem) {
@@ -44,23 +39,14 @@ class Polyester {
     }
 
     this.appElem = appElem;
-
-    this.eventListenerManager = new EventListenerManager(
+    this.eventQueue = new EventQueue(this.logger);
+    this.subscriptionManager = new SubscriptionManager(
       this.browser,
       this.logger,
       (msg, jobConfig) => {
         this.queueUpdate(msg, jobConfig);
       }
     );
-
-    this.intervalManager = new IntervalManager(
-      this.browser,
-      this.logger,
-      (msg, jobConfig) => {
-        this.queueUpdate(msg, jobConfig);
-      }
-    );
-
     this.effectHandler = new EffectHandler(this.browser, this.logger);
 
     const { model, effects } = page.init();
@@ -68,7 +54,7 @@ class Polyester {
     this.initialRender();
 
     const subscriptions = this.page.getSubscriptions(this.state.model);
-    this.handleSubscriptions(subscriptions);
+    this.subscriptionManager.handle(subscriptions);
     this.effectHandler.handle(effects);
   }
 
@@ -111,14 +97,6 @@ class Polyester {
   private initialRender() {
     const markup = this.page.viewBody(this.state.model);
     this.updateDom(markup);
-  }
-
-  private handleSubscriptions(subscriptions: Subscription[]) {
-    const groupedSubscriptions = groupSubscriptions(subscriptions, this.logger);
-    this.eventListenerManager.setEventListeners(
-      groupedSubscriptions.eventListeners
-    );
-    this.intervalManager.setIntervals(groupedSubscriptions.intervals);
   }
 
   private replaceMsgPlaceholder(msg: Msg) {
@@ -166,7 +144,7 @@ class Polyester {
     this.updateDom(markup);
 
     const newSubscriptions = this.page.getSubscriptions(this.state.model);
-    this.handleSubscriptions(newSubscriptions);
+    this.subscriptionManager.handle(newSubscriptions);
     this.effectHandler.handle(effects);
   }
 }

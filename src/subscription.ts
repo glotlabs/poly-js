@@ -1,5 +1,47 @@
+import { Browser } from "./browser";
+import { JobConfig } from "./event_queue";
 import { Logger } from "./logger";
-import { Subscription, RustEventListener, RustInterval } from "./rust_types";
+import {
+  Subscription,
+  RustEventListener,
+  RustInterval,
+  Msg,
+} from "./rust_types";
+import { EventListenerManager } from "./subscription/event_listener";
+import { IntervalManager } from "./subscription/interval";
+
+class SubscriptionManager {
+  private readonly eventListenerManager: EventListenerManager;
+  private readonly intervalManager: IntervalManager;
+
+  constructor(
+    private readonly browser: Browser,
+    private readonly logger: Logger,
+    private readonly onMsg: (msg: Msg, jobConfig: JobConfig) => void
+  ) {
+    this.eventListenerManager = new EventListenerManager(
+      this.browser,
+      this.logger,
+      this.onMsg
+    );
+
+    this.intervalManager = new IntervalManager(
+      this.browser,
+      this.logger,
+      this.onMsg
+    );
+  }
+
+  public handle(subscriptions: Subscription[]) {
+    const groupedSubscriptions = groupSubscriptions(subscriptions, this.logger);
+
+    this.eventListenerManager.setEventListeners(
+      groupedSubscriptions.eventListeners
+    );
+
+    this.intervalManager.setIntervals(groupedSubscriptions.intervals);
+  }
+}
 
 interface GroupedSubscriptions {
   eventListeners: RustEventListener[];
@@ -40,4 +82,4 @@ function groupSubscriptions(
   return groupedSubscriptions;
 }
 
-export { GroupedSubscriptions, groupSubscriptions };
+export { SubscriptionManager };
