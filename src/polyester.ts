@@ -59,7 +59,8 @@ class Polyester {
       }
     );
 
-    this.state.model = page.initialModel();
+    const { model, effects } = page.init();
+    this.state.model = model;
     this.initialRender();
 
     const subscriptions = this.page.getSubscriptions(this.state.model);
@@ -152,7 +153,9 @@ class Polyester {
 
   private update(msg: Msg) {
     const realMsg = this.replaceMsgPlaceholder(msg);
-    this.state.model = this.page.update(realMsg, this.state.model);
+    const { model, effects } = this.page.update(realMsg, this.state.model);
+
+    this.state.model = model;
 
     const markup = this.page.viewBody(this.state.model);
     this.updateDom(markup);

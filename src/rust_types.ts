@@ -4,10 +4,25 @@ type Msg = any;
 
 interface Page {
   id(): string;
-  initialModel(): Model;
+  init(): Model;
   update(msg: Msg, model: Model): Model;
   getSubscriptions(model: Model): Subscription[];
   viewBody(model: Model): string;
+}
+
+interface ModelAndEffects {
+  model: Model;
+  effects: Effect[];
+}
+
+interface Effect {
+  type: string;
+  config: Navigation;
+}
+
+interface Navigation {
+  type: string;
+  config: string;
 }
 
 interface Subscription {
