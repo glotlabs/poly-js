@@ -8,7 +8,7 @@ import { captureValue } from "./value";
 import { EffectHandler } from "./effect";
 
 interface Config {
-  debug: boolean;
+  debug?: boolean;
 }
 
 interface State {
@@ -64,6 +64,10 @@ class Polyester {
 
   public send(msg: Msg, jobConfig?: JobConfig) {
     this.queueUpdate(msg, jobConfig ?? defaultJobConfig());
+  }
+
+  public onCustomEffect(handler: (effect: any) => void) {
+    this.effectHandler.setCustomEffectHandler(handler);
   }
 
   private updateDom(markup: string) {

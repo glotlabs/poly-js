@@ -3,8 +3,16 @@ import { NavigationEffectHandler } from "./effect/navigation";
 import { Logger } from "./logger";
 import { Effect, NavigationEffect } from "./rust_types";
 
+interface State {
+  customEffectHandler: (effect: any) => void;
+}
+
 class EffectHandler {
   private readonly navigationHandler: NavigationEffectHandler;
+
+  private readonly state: State = {
+    customEffectHandler: () => {},
+  };
 
   constructor(
     private readonly browser: Browser,
@@ -22,16 +30,26 @@ class EffectHandler {
     groupedEffects.navigationEffects.forEach((effect) => {
       this.navigationHandler.handle(effect);
     });
+
+    groupedEffects.customEffects.forEach((effect) => {
+      this.state.customEffectHandler(effect);
+    });
+  }
+
+  public setCustomEffectHandler(handler: (effect: any) => void) {
+    this.state.customEffectHandler = handler;
   }
 }
 
 interface GroupedEffects {
   navigationEffects: NavigationEffect[];
+  customEffects: any[];
 }
 
 function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
   const groupedEffects: GroupedEffects = {
     navigationEffects: [],
+    customEffects: [],
   };
 
   effects.forEach((effect) => {
@@ -40,6 +58,10 @@ function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
         groupedEffects.navigationEffects.push(
           effect.config as NavigationEffect
         );
+        break;
+
+      case "custom":
+        groupedEffects.customEffects.push(effect.config);
         break;
 
       case "none":
