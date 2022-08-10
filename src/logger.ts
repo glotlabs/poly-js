@@ -109,9 +109,9 @@ function defaultLoggerConfig(): Config {
 
 function defaultDebugConfig(): Config {
   return {
-    debugDomains: [Domain.Core, Domain.Subscriptions, Domain.Effects],
-    debugLogger: DebugLogger.Trace,
-    debugVerbosity: Verbosity.Verbose,
+    debugDomains: [Domain.All],
+    debugLogger: DebugLogger.Log,
+    debugVerbosity: Verbosity.Normal,
   };
 }
 
