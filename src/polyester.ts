@@ -9,7 +9,7 @@ import { SubscriptionManager } from "./subscription";
 import { defaultJobConfig, EventQueue, JobConfig } from "./event_queue";
 import { BrowserLogger, Logger } from "./logger";
 import { CaptureType, Model, Msg, Page } from "./rust_types";
-import { captureValue } from "./value";
+import { ValueExtractor } from "./value_extractor";
 import { EffectHandler } from "./effect";
 
 interface Config {
@@ -25,6 +25,7 @@ class Polyester {
   private readonly browser: Browser;
   private readonly localStorage: LocalStorage;
   private readonly logger: Logger;
+  private readonly valueExtractor: ValueExtractor;
   private readonly eventQueue: EventQueue;
   private readonly subscriptionManager: SubscriptionManager;
   private readonly effectHandler: EffectHandler;
@@ -35,10 +36,7 @@ class Polyester {
 
   constructor(private readonly page: Page, private readonly config?: Config) {
     this.browser = new RealBrowser();
-    this.localStorage = new BrowserLocalStorage();
-    this.logger = new BrowserLogger({
-      debug: config?.debug ?? false,
-    });
+
     const appId = page.id();
     const appElem = this.browser.getElementById(appId);
     if (!appElem) {
@@ -46,6 +44,15 @@ class Polyester {
     }
 
     this.appElem = appElem;
+    this.localStorage = new BrowserLocalStorage();
+    this.logger = new BrowserLogger({
+      debug: config?.debug ?? false,
+    });
+    this.valueExtractor = new ValueExtractor(
+      this.browser,
+      this.localStorage,
+      this.logger
+    );
     this.eventQueue = new EventQueue(this.logger);
     this.subscriptionManager = new SubscriptionManager(
       this.browser,
@@ -124,13 +131,7 @@ class Polyester {
 
     const entries = Object.entries(msg).map(([key, value]) => {
       if (isObject(msg) && "type" in Object(value)) {
-        const newValue = captureValue(
-          this.browser,
-          this.localStorage,
-          value as CaptureType,
-          this.logger
-        );
-
+        const newValue = this.valueExtractor.extract(value as CaptureType);
         return [key, newValue];
       } else {
         return [key, value];
