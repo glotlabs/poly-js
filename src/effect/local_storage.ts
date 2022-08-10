@@ -1,5 +1,6 @@
 import { LocalStorage } from "../browser";
 import { JobConfig } from "../event_queue";
+import { JsonHelper } from "../json";
 import { Logger } from "../logger";
 import {
   LocalStorageEffect,
@@ -12,6 +13,7 @@ import {
 class LocalStorageEffectHandler {
   constructor(
     private readonly localStorage: LocalStorage,
+    private readonly jsonHelper: JsonHelper,
     private readonly logger: Logger,
     private readonly onMsg: (msg: Msg, jobConfig: JobConfig) => void
   ) {}
@@ -41,7 +43,7 @@ class LocalStorageEffectHandler {
   }
 
   private handleSetItem({ key, value }: LocalStorageSetItem): void {
-    const jsonValue = JSON.stringify(value);
+    const jsonValue = this.jsonHelper.stringify(value);
     this.localStorage.setItem(key, jsonValue);
   }
 }

@@ -11,6 +11,7 @@ import { BrowserLogger, Logger } from "./logger";
 import { CaptureType, Model, Msg, Page } from "./rust_types";
 import { ValueExtractor } from "./value_extractor";
 import { EffectHandler } from "./effect";
+import { JsonHelper } from "./json";
 
 interface Config {
   debug?: boolean;
@@ -25,6 +26,7 @@ class Polyester {
   private readonly browser: Browser;
   private readonly localStorage: LocalStorage;
   private readonly logger: Logger;
+  private readonly jsonHelper: JsonHelper;
   private readonly valueExtractor: ValueExtractor;
   private readonly eventQueue: EventQueue;
   private readonly subscriptionManager: SubscriptionManager;
@@ -48,9 +50,11 @@ class Polyester {
     this.logger = new BrowserLogger({
       debug: config?.debug ?? false,
     });
+    this.jsonHelper = new JsonHelper(this.logger);
     this.valueExtractor = new ValueExtractor(
       this.browser,
       this.localStorage,
+      this.jsonHelper,
       this.logger
     );
     this.eventQueue = new EventQueue(this.logger);
@@ -64,6 +68,7 @@ class Polyester {
     this.effectHandler = new EffectHandler(
       this.browser,
       this.localStorage,
+      this.jsonHelper,
       this.logger,
       (msg, jobConfig) => {
         this.queueUpdate(msg, jobConfig);

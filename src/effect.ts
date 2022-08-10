@@ -3,6 +3,7 @@ import { CustomEffectHandler } from "./effect/custom";
 import { LocalStorageEffectHandler } from "./effect/local_storage";
 import { NavigationEffectHandler } from "./effect/navigation";
 import { JobConfig } from "./event_queue";
+import { JsonHelper } from "./json";
 import { Logger } from "./logger";
 import {
   Effect,
@@ -19,6 +20,7 @@ class EffectHandler {
   constructor(
     private readonly browser: Browser,
     private readonly localStorage: LocalStorage,
+    private readonly jsonHelper: JsonHelper,
     private readonly logger: Logger,
     private readonly onMsg: (msg: Msg, jobConfig: JobConfig) => void
   ) {
@@ -29,6 +31,7 @@ class EffectHandler {
 
     this.localStorageHandler = new LocalStorageEffectHandler(
       this.localStorage,
+      this.jsonHelper,
       this.logger,
       this.onMsg
     );

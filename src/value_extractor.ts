@@ -1,4 +1,5 @@
 import { Browser, LocalStorage, WindowSize } from "./browser";
+import { JsonHelper } from "./json";
 import { Logger } from "./logger";
 import {
   CaptureType,
@@ -10,6 +11,7 @@ class ValueExtractor {
   constructor(
     private readonly browser: Browser,
     private readonly localStorage: LocalStorage,
+    private readonly jsonHelper: JsonHelper,
     private readonly logger: Logger
   ) {}
 
@@ -35,7 +37,7 @@ class ValueExtractor {
     const elem = this.browser.getElementById(elementId) as HTMLInputElement;
 
     if (elem && elem.value) {
-      return safeJsonParse(elem.value, this.logger);
+      return this.jsonHelper.parse(elem.value);
     }
 
     this.logger.error("Failed to capture value from element", {
@@ -51,20 +53,11 @@ class ValueExtractor {
       return null;
     }
 
-    return safeJsonParse(value, this.logger);
+    return this.jsonHelper.parse(value);
   }
 
   private windowSize(): WindowSize {
     return this.browser.getWindowSize();
-  }
-}
-
-function safeJsonParse(s: string, logger: Logger) {
-  try {
-    return JSON.parse(s);
-  } catch (e) {
-    logger.error("Failed to parse json", { string: s, exception: e });
-    return "";
   }
 }
 
