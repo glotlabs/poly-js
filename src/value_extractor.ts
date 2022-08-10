@@ -30,7 +30,7 @@ class ValueExtractor {
         this.logger.error("Unknown value capture type", { type });
     }
 
-    return "";
+    return null;
   }
 
   private fromElementValue({ elementId }: CaptureValueFromElement): any {
@@ -44,7 +44,7 @@ class ValueExtractor {
       elementId,
     });
 
-    return "";
+    return null;
   }
 
   private fromLocalStorage({ key }: CaptureValueFromLocalStorage): any {
