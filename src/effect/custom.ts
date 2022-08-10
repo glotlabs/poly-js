@@ -22,7 +22,7 @@ class CustomEffectHandler {
 
   public handle(effect: any): void {
     if (this.state.handler) {
-      this.state.handler(effect);
+      this.safeHandle(this.state.handler, effect);
     } else {
       if (this.config.useBacklog) {
         this.addToBacklog(effect);
@@ -71,8 +71,19 @@ class CustomEffectHandler {
     this.state.effectBacklog = [];
 
     effects.forEach((effect) => {
-      handler(effect);
+      this.safeHandle(handler, effect);
     });
+  }
+
+  private safeHandle(handler: (effect: any) => void, effect: any) {
+    try {
+      handler(effect);
+    } catch (e) {
+      this.logger.error("Error while handling custom effect", {
+        effect,
+        exception: e,
+      });
+    }
   }
 }
 
