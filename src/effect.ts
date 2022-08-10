@@ -33,7 +33,10 @@ class EffectHandler {
       this.onMsg
     );
 
-    this.customHandler = new CustomEffectHandler();
+    this.customHandler = new CustomEffectHandler(
+      { useBacklog: true },
+      this.logger
+    );
   }
 
   public handle(effects: Effect[]) {
