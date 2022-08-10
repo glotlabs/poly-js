@@ -1,6 +1,6 @@
 import { Browser } from "./browser";
 import { JobConfig } from "./event_queue";
-import { DebugDomain, Logger, Verbosity } from "./logger";
+import { Domain, Logger, Verbosity } from "./logger";
 import {
   Subscription,
   RustEventListener,
@@ -36,7 +36,7 @@ class SubscriptionManager {
     const groupedSubscriptions = groupSubscriptions(subscriptions, this.logger);
 
     this.logger.debug({
-      domain: DebugDomain.Subscriptions,
+      domain: Domain.Subscriptions,
       verbosity: Verbosity.Normal,
       message: "Handling subscriptions",
       context: groupedSubscriptions,
@@ -82,7 +82,11 @@ function groupSubscriptions(
         break;
 
       default:
-        logger.warn("Unknown subscription type", { type: subscription.type });
+        logger.warn({
+          domain: Domain.Subscriptions,
+          message: "Unknown subscription type",
+          context: { type: subscription.type },
+        });
     }
   });
 

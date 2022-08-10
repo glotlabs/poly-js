@@ -1,11 +1,12 @@
 import { Browser } from "./browser";
+import { History } from "./browser/history";
 import { LocalStorage } from "./browser/local_storage";
 import { CustomEffectHandler } from "./effect/custom";
 import { LocalStorageEffectHandler } from "./effect/local_storage";
 import { NavigationEffectHandler } from "./effect/navigation";
 import { JobConfig } from "./event_queue";
 import { JsonHelper } from "./json";
-import { DebugDomain, Logger, Verbosity } from "./logger";
+import { Domain, Logger, Verbosity } from "./logger";
 import {
   Effect,
   LocalStorageEffect,
@@ -19,14 +20,14 @@ class EffectHandler {
   private readonly customHandler: CustomEffectHandler;
 
   constructor(
-    private readonly browser: Browser,
+    private readonly history: History,
     private readonly localStorage: LocalStorage,
     private readonly jsonHelper: JsonHelper,
     private readonly logger: Logger,
     private readonly onMsg: (msg: Msg, jobConfig: JobConfig) => void
   ) {
     this.navigationHandler = new NavigationEffectHandler(
-      this.browser,
+      this.history,
       this.logger
     );
 
@@ -47,7 +48,7 @@ class EffectHandler {
     const groupedEffects = groupEffects(effects, this.logger);
 
     this.logger.debug({
-      domain: DebugDomain.Effects,
+      domain: Domain.Effects,
       verbosity: Verbosity.Normal,
       message: "Handling effects",
       context: groupedEffects,
@@ -106,7 +107,11 @@ function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
         break;
 
       default:
-        logger.warn("Unknown effect type", { type: effect.type });
+        logger.warn({
+          domain: Domain.Effects,
+          message: "Unknown effect type",
+          context: { type: effect.type },
+        });
     }
   });
 

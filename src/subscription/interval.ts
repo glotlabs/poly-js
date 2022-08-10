@@ -1,6 +1,6 @@
 import { AbortFn, Browser } from "../browser";
 import { JobConfig, queueStrategyFromString } from "../event_queue";
-import { DebugDomain, Logger, Verbosity } from "../logger";
+import { Domain, Logger, Verbosity } from "../logger";
 import { Msg, RustInterval } from "../rust_types";
 
 interface ActiveInterval {
@@ -30,7 +30,7 @@ class IntervalManager {
       prepareIntervalsDelta(oldIntervals, newIntervals);
 
     this.logger.debug({
-      domain: DebugDomain.Interval,
+      domain: Domain.Interval,
       verbosity: Verbosity.Normal,
       message: "Updating intervals",
       context: {
@@ -58,7 +58,7 @@ class IntervalManager {
     }, interval.duration);
 
     this.logger.debug({
-      domain: DebugDomain.Interval,
+      domain: Domain.Interval,
       verbosity: Verbosity.Verbose,
       message: "Started interval",
       context: {
@@ -78,7 +78,7 @@ class IntervalManager {
       interval.abort.abort();
 
       this.logger.debug({
-        domain: DebugDomain.Interval,
+        domain: Domain.Interval,
         verbosity: Verbosity.Verbose,
         message: "Stopped interval",
         context: {

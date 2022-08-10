@@ -1,4 +1,4 @@
-import { Logger } from "./logger";
+import { Domain, Logger } from "./logger";
 
 class JsonHelper {
   constructor(private readonly logger: Logger) {}
@@ -7,7 +7,12 @@ class JsonHelper {
     try {
       return JSON.parse(json);
     } catch (e) {
-      this.logger.error("Failed to parse json", { string: json, exception: e });
+      this.logger.error({
+        domain: Domain.Core,
+        message: "Failed to parse json",
+        context: { string: json, exception: e },
+      });
+
       throw e;
     }
   }
@@ -16,10 +21,12 @@ class JsonHelper {
     try {
       return JSON.stringify(data);
     } catch (e) {
-      this.logger.error("Failed to stringify data into json", {
-        data,
-        exception: e,
+      this.logger.error({
+        domain: Domain.Core,
+        message: "Failed to stringify data into json",
+        context: { data, exception: e },
       });
+
       throw e;
     }
   }

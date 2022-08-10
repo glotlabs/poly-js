@@ -1,19 +1,25 @@
 interface Logger {
-  warn(message: string, ...context: any[]): void;
-  error(message: string, ...context: any[]): void;
+  warn(entry: LogEntry): void;
+  error(entry: LogEntry): void;
   debug(entry: DebugEntry): void;
 }
 
 const PREFIX = "Polyester";
 
 interface Config {
-  debugDomains: DebugDomain[];
+  debugDomains: Domain[];
   debugLogger: DebugLogger;
   debugVerbosity: Verbosity;
 }
 
+interface LogEntry {
+  domain: Domain;
+  message: string;
+  context: any;
+}
+
 interface DebugEntry {
-  domain: DebugDomain;
+  domain: Domain;
   verbosity: Verbosity;
   message: string;
   context: any;
@@ -22,18 +28,18 @@ interface DebugEntry {
 class BrowserLogger implements Logger {
   constructor(private readonly config: Config) {}
 
-  public warn(message: string, context: object): void {
-    console.warn(`[${PREFIX}]`, message, context);
+  public warn({ domain, message, context }: LogEntry): void {
+    console.warn(`[${PREFIX}:${Domain[domain]}]`, message, context);
   }
 
-  public error(message: string, context: object): void {
-    console.error(`[${PREFIX}]`, message, context);
+  public error({ domain, message, context }: LogEntry): void {
+    console.error(`[${PREFIX}:${Domain[domain]}]`, message, context);
   }
 
   public debug({ domain, verbosity, message, context }: DebugEntry): void {
     if (this.validDomain(domain) && this.validVerbosity(verbosity)) {
       const logger = this.getDebugLogger();
-      logger(`[${PREFIX}::${domainToString(domain)}]`, message, context);
+      logger(`[${PREFIX}:${Domain[domain]}]`, message, context);
     }
   }
 
@@ -47,14 +53,14 @@ class BrowserLogger implements Logger {
     }
   }
 
-  private validDomain(domain: DebugDomain): boolean {
+  private validDomain(domain: Domain): boolean {
     if (this.config.debugDomains.length === 0) {
       return false;
     }
 
     return (
       this.config.debugDomains.includes(domain) ||
-      this.config.debugDomains.includes(DebugDomain.All)
+      this.config.debugDomains.includes(Domain.All)
     );
   }
 
@@ -69,7 +75,7 @@ class BrowserLogger implements Logger {
   }
 }
 
-enum DebugDomain {
+enum Domain {
   All,
   Core,
   Subscriptions,
@@ -77,12 +83,10 @@ enum DebugDomain {
   Interval,
   Effects,
   LocalStorage,
+  Navigation,
   CustomEffect,
   ValueExtractor,
-}
-
-function domainToString(domain: DebugDomain): string {
-  return DebugDomain[domain];
+  EventQueue,
 }
 
 enum DebugLogger {
@@ -105,11 +109,7 @@ function defaultLoggerConfig(): Config {
 
 function defaultDebugConfig(): Config {
   return {
-    debugDomains: [
-      DebugDomain.Core,
-      DebugDomain.Subscriptions,
-      DebugDomain.Effects,
-    ],
+    debugDomains: [Domain.Core, Domain.Subscriptions, Domain.Effects],
     debugLogger: DebugLogger.Trace,
     debugVerbosity: Verbosity.Verbose,
   };
@@ -117,7 +117,7 @@ function defaultDebugConfig(): Config {
 
 function fullDebugConfig(): Config {
   return {
-    debugDomains: [DebugDomain.All],
+    debugDomains: [Domain.All],
     debugLogger: DebugLogger.Trace,
     debugVerbosity: Verbosity.Verbose,
   };
@@ -126,7 +126,7 @@ function fullDebugConfig(): Config {
 export {
   Logger,
   BrowserLogger,
-  DebugDomain,
+  Domain,
   DebugLogger,
   Config,
   Verbosity,

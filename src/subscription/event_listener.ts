@@ -1,6 +1,6 @@
 import { AbortFn, Browser, listenTargetFromString } from "../browser";
 import { JobConfig, queueStrategyFromString } from "../event_queue";
-import { DebugDomain, Logger, Verbosity } from "../logger";
+import { Domain, Logger, Verbosity } from "../logger";
 
 import {
   Msg,
@@ -39,7 +39,7 @@ class EventListenerManager {
       prepareEventListenersDelta(oldListeners, newListeners);
 
     this.logger.debug({
-      domain: DebugDomain.EventListener,
+      domain: Domain.EventListener,
       verbosity: Verbosity.Normal,
       message: "Updating event listeners",
       context: {
@@ -74,7 +74,7 @@ class EventListenerManager {
     );
 
     this.logger.debug({
-      domain: DebugDomain.EventListener,
+      domain: Domain.EventListener,
       verbosity: Verbosity.Verbose,
       message: "Started event listener",
       context: {
@@ -95,7 +95,7 @@ class EventListenerManager {
       listener.abort.abort();
 
       this.logger.debug({
-        domain: DebugDomain.EventListener,
+        domain: Domain.EventListener,
         verbosity: Verbosity.Verbose,
         message: "Stopped event listener",
         context: {
@@ -157,7 +157,11 @@ class EventListenerManager {
         );
 
       default:
-        this.logger.warn("Unknown matcher type", { type: matcher.type });
+        this.logger.warn({
+          domain: Domain.EventListener,
+          message: "Unknown event matcher",
+          context: { type: matcher.type },
+        });
     }
 
     return false;

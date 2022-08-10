@@ -1,4 +1,4 @@
-import { Logger } from "./logger";
+import { Domain, Logger } from "./logger";
 import { QueueStrategy } from "./rust_types";
 
 interface Job {
@@ -40,7 +40,11 @@ class EventQueue {
 
   public enqueue({ config: { id, strategy }, action }: Job): void {
     if (this.state.queue.length > 100) {
-      this.logger.warn("Event queue is full, dropping event", { id });
+      this.logger.warn({
+        domain: Domain.EventQueue,
+        message: "Event queue is full, dropping event",
+        context: { id },
+      });
       return;
     }
 
@@ -79,7 +83,12 @@ class EventQueue {
       event.action();
       event.resolve(null);
     } catch (e) {
-      this.logger.error("Failed to run action", { exception: e });
+      this.logger.error({
+        domain: Domain.EventQueue,
+        message: "Failed to run action",
+        context: { exception: e },
+      });
+
       event.reject();
     }
 
@@ -97,7 +106,11 @@ function queueStrategyFromString(strategy: string, logger: Logger) {
       return QueueStrategy.DropOlder;
 
     default:
-      logger.error("Unknown queue strategy", { strategy });
+      logger.warn({
+        domain: Domain.EventQueue,
+        message: "Unknown queue strategy",
+        context: { strategy },
+      });
   }
 
   return QueueStrategy.Fifo;

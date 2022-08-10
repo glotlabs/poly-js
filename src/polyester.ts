@@ -7,7 +7,7 @@ import {
   Logger,
   Config as LoggerConfig,
   defaultLoggerConfig,
-  DebugDomain,
+  Domain,
   Verbosity,
 } from "./logger";
 import { CaptureType, Effect, Model, Msg, Page } from "./rust_types";
@@ -16,6 +16,7 @@ import { EffectHandler } from "./effect";
 import { JsonHelper } from "./json";
 import { BrowserLocalStorage, LocalStorage } from "./browser/local_storage";
 import { BrowserWindow, Window } from "./browser/window";
+import { BrowserHistory, History } from "./browser/history";
 
 interface Config {
   loggerConfig?: LoggerConfig;
@@ -33,6 +34,7 @@ class Polyester {
   private readonly logger: Logger;
   private readonly jsonHelper: JsonHelper;
   private readonly valueExtractor: ValueExtractor;
+  private readonly history: History;
   private readonly eventQueue: EventQueue;
   private readonly subscriptionManager: SubscriptionManager;
   private readonly effectHandler: EffectHandler;
@@ -64,6 +66,7 @@ class Polyester {
       this.jsonHelper,
       this.logger
     );
+    this.history = new BrowserHistory();
     this.eventQueue = new EventQueue(this.logger);
     this.subscriptionManager = new SubscriptionManager(
       this.browser,
@@ -73,7 +76,7 @@ class Polyester {
       }
     );
     this.effectHandler = new EffectHandler(
-      this.browser,
+      this.history,
       this.localStorage,
       this.jsonHelper,
       this.logger,
@@ -126,7 +129,7 @@ class Polyester {
     });
 
     this.logger.debug({
-      domain: DebugDomain.Core,
+      domain: Domain.Core,
       verbosity: Verbosity.Verbose,
       message: "Updated DOM with new markup",
       context: {
@@ -169,7 +172,7 @@ class Polyester {
     const realMsg = this.replaceMsgPlaceholder(msg);
 
     this.logger.debug({
-      domain: DebugDomain.Core,
+      domain: Domain.Core,
       verbosity: Verbosity.Normal,
       message: "Sending msg to rust",
       context: {

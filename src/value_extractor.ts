@@ -2,7 +2,7 @@ import { Browser } from "./browser";
 import { LocalStorage } from "./browser/local_storage";
 import { Window, WindowSize } from "./browser/window";
 import { JsonHelper } from "./json";
-import { DebugDomain, Logger, Verbosity } from "./logger";
+import { Domain, Logger, Verbosity } from "./logger";
 import {
   CaptureType,
   CaptureValueFromElement,
@@ -30,7 +30,11 @@ class ValueExtractor {
         return this.windowSize();
 
       default:
-        this.logger.error("Unknown value capture type", { type });
+        this.logger.warn({
+          domain: Domain.ValueExtractor,
+          message: "Unknown value extractor",
+          context: { type },
+        });
     }
 
     return null;
@@ -43,12 +47,11 @@ class ValueExtractor {
       const jsonValue = this.jsonHelper.parse(elem.value);
 
       this.logger.debug({
-        domain: DebugDomain.ValueExtractor,
+        domain: Domain.ValueExtractor,
         verbosity: Verbosity.Normal,
         message: "Got value from element",
         context: {
           elementId,
-          element: elem,
           value: jsonValue,
         },
       });
@@ -56,8 +59,10 @@ class ValueExtractor {
       return jsonValue;
     }
 
-    this.logger.error("Failed to capture value from element", {
-      elementId,
+    this.logger.error({
+      domain: Domain.ValueExtractor,
+      message: "Failed to capture value from element",
+      context: { elementId },
     });
 
     return null;
@@ -72,7 +77,7 @@ class ValueExtractor {
     const jsonValue = this.jsonHelper.parse(value);
 
     this.logger.debug({
-      domain: DebugDomain.ValueExtractor,
+      domain: Domain.ValueExtractor,
       verbosity: Verbosity.Normal,
       message: "Got value from localStorage",
       context: {

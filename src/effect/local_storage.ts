@@ -1,7 +1,7 @@
 import { LocalStorage } from "../browser/local_storage";
 import { JobConfig } from "../event_queue";
 import { JsonHelper } from "../json";
-import { DebugDomain, Logger, Verbosity } from "../logger";
+import { Domain, Logger, Verbosity } from "../logger";
 import {
   LocalStorageEffect,
   LocalStorageGetItem,
@@ -29,8 +29,10 @@ class LocalStorageEffectHandler {
         break;
 
       default:
-        this.logger.warn("Unknown local storage effect type", {
-          type: effect.type,
+        this.logger.warn({
+          domain: Domain.LocalStorage,
+          message: "Unknown localStorage effect",
+          context: { type: effect.type },
         });
     }
   }
@@ -47,7 +49,7 @@ class LocalStorageEffectHandler {
     this.localStorage.setItem(key, jsonValue);
 
     this.logger.debug({
-      domain: DebugDomain.LocalStorage,
+      domain: Domain.LocalStorage,
       verbosity: Verbosity.Normal,
       message: "Saved value to localStorage",
       context: {

@@ -1,10 +1,10 @@
-import { Browser } from "../browser";
-import { Logger } from "../logger";
+import { History } from "../browser/history";
+import { Domain, Logger } from "../logger";
 import { NavigationEffect } from "../rust_types";
 
 class NavigationEffectHandler {
   constructor(
-    private readonly browser: Browser,
+    private readonly history: History,
     private readonly logger: Logger
   ) {}
 
@@ -19,18 +19,20 @@ class NavigationEffectHandler {
         break;
 
       default:
-        this.logger.warn("Unknown navigation effect type", {
-          type: effect.type,
+        this.logger.warn({
+          domain: Domain.Navigation,
+          message: "Unknown effect type",
+          context: { type: effect.type },
         });
     }
   }
 
   private pushUrl(url: string): void {
-    this.browser.pushUrl(url);
+    this.history.pushUrl(url);
   }
 
   private replaceUrl(url: string): void {
-    this.browser.replaceUrl(url);
+    this.history.replaceUrl(url);
   }
 }
 

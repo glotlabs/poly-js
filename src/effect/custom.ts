@@ -1,4 +1,4 @@
-import { DebugDomain, Logger, Verbosity } from "../logger";
+import { Domain, Logger, Verbosity } from "../logger";
 
 interface State {
   handler: ((effect: any) => void) | null;
@@ -43,7 +43,7 @@ class CustomEffectHandler {
       this.state.effectBacklog.push(effect);
 
       this.logger.debug({
-        domain: DebugDomain.CustomEffect,
+        domain: Domain.CustomEffect,
         verbosity: Verbosity.Normal,
         message: "Added effect to backlog",
         context: {
@@ -51,15 +51,17 @@ class CustomEffectHandler {
         },
       });
     } else {
-      this.logger.warn("The custom effect backlog is full, ignoring effect", {
-        effect,
+      this.logger.warn({
+        domain: Domain.CustomEffect,
+        message: "The custom effect backlog is full, ignoring effect",
+        context: { effect },
       });
     }
   }
 
   private handleBacklog(handler: (effect: any) => void): void {
     this.logger.debug({
-      domain: DebugDomain.CustomEffect,
+      domain: Domain.CustomEffect,
       verbosity: Verbosity.Normal,
       message: "Handling backlog",
       context: {
@@ -79,9 +81,10 @@ class CustomEffectHandler {
     try {
       handler(effect);
     } catch (e) {
-      this.logger.error("Error while handling custom effect", {
-        effect,
-        exception: e,
+      this.logger.error({
+        domain: Domain.CustomEffect,
+        message: "Error while handling custom effect",
+        context: { effect, exception: e },
       });
     }
   }
