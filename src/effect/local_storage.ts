@@ -29,7 +29,7 @@ class LocalStorageEffectHandler {
         break;
 
       default:
-        this.logger.warn("Unknown navigation effect type", {
+        this.logger.warn("Unknown local storage effect type", {
           type: effect.type,
         });
     }
