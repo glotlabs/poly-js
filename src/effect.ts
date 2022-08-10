@@ -1,4 +1,5 @@
 import { Browser, LocalStorage } from "./browser";
+import { CustomEffectHandler } from "./effect/custom";
 import { LocalStorageEffectHandler } from "./effect/local_storage";
 import { NavigationEffectHandler } from "./effect/navigation";
 import { JobConfig } from "./event_queue";
@@ -10,17 +11,10 @@ import {
   NavigationEffect,
 } from "./rust_types";
 
-interface State {
-  customEffectHandler: (effect: any) => void;
-}
-
 class EffectHandler {
   private readonly navigationHandler: NavigationEffectHandler;
-  private readonly localstorageHandler: LocalStorageEffectHandler;
-
-  private readonly state: State = {
-    customEffectHandler: () => {},
-  };
+  private readonly localStorageHandler: LocalStorageEffectHandler;
+  private readonly customHandler: CustomEffectHandler;
 
   constructor(
     private readonly browser: Browser,
@@ -33,11 +27,13 @@ class EffectHandler {
       this.logger
     );
 
-    this.localstorageHandler = new LocalStorageEffectHandler(
+    this.localStorageHandler = new LocalStorageEffectHandler(
       this.localStorage,
       this.logger,
       this.onMsg
     );
+
+    this.customHandler = new CustomEffectHandler();
   }
 
   public handle(effects: Effect[]) {
@@ -49,16 +45,16 @@ class EffectHandler {
     });
 
     groupedEffects.localStorageEffects.forEach((effect) => {
-      this.localstorageHandler.handle(effect);
+      this.localStorageHandler.handle(effect);
     });
 
     groupedEffects.customEffects.forEach((effect) => {
-      this.state.customEffectHandler(effect);
+      this.customHandler.handle(effect);
     });
   }
 
   public setCustomEffectHandler(handler: (effect: any) => void) {
-    this.state.customEffectHandler = handler;
+    this.customHandler.setHandler(handler);
   }
 }
 
