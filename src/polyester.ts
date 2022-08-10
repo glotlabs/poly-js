@@ -1,10 +1,5 @@
 import morphdom from "morphdom";
-import {
-  Browser,
-  BrowserLocalStorage,
-  LocalStorage,
-  RealBrowser,
-} from "./browser";
+import { Browser, RealBrowser } from "./browser";
 import { SubscriptionManager } from "./subscription";
 import { defaultJobConfig, EventQueue, JobConfig } from "./event_queue";
 import { BrowserLogger, Logger } from "./logger";
@@ -12,6 +7,8 @@ import { CaptureType, Model, Msg, Page } from "./rust_types";
 import { ValueExtractor } from "./value_extractor";
 import { EffectHandler } from "./effect";
 import { JsonHelper } from "./json";
+import { BrowserLocalStorage, LocalStorage } from "./browser/local_storage";
+import { BrowserWindow, Window } from "./browser/window";
 
 interface Config {
   debug?: boolean;
@@ -24,6 +21,7 @@ interface State {
 class Polyester {
   private readonly appElem: HTMLElement;
   private readonly browser: Browser;
+  private readonly window: Window;
   private readonly localStorage: LocalStorage;
   private readonly logger: Logger;
   private readonly jsonHelper: JsonHelper;
@@ -46,6 +44,7 @@ class Polyester {
     }
 
     this.appElem = appElem;
+    this.window = new BrowserWindow();
     this.localStorage = new BrowserLocalStorage();
     this.logger = new BrowserLogger({
       debug: config?.debug ?? false,
@@ -53,6 +52,7 @@ class Polyester {
     this.jsonHelper = new JsonHelper(this.logger);
     this.valueExtractor = new ValueExtractor(
       this.browser,
+      this.window,
       this.localStorage,
       this.jsonHelper,
       this.logger

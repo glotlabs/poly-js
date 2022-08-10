@@ -1,4 +1,5 @@
-import { Browser, LocalStorage } from "./browser";
+import { Browser } from "./browser";
+import { LocalStorage } from "./browser/local_storage";
 import { CustomEffectHandler } from "./effect/custom";
 import { LocalStorageEffectHandler } from "./effect/local_storage";
 import { NavigationEffectHandler } from "./effect/navigation";

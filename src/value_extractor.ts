@@ -1,4 +1,6 @@
-import { Browser, LocalStorage, WindowSize } from "./browser";
+import { Browser } from "./browser";
+import { LocalStorage } from "./browser/local_storage";
+import { Window, WindowSize } from "./browser/window";
 import { JsonHelper } from "./json";
 import { Logger } from "./logger";
 import {
@@ -10,6 +12,7 @@ import {
 class ValueExtractor {
   constructor(
     private readonly browser: Browser,
+    private readonly window: Window,
     private readonly localStorage: LocalStorage,
     private readonly jsonHelper: JsonHelper,
     private readonly logger: Logger
@@ -57,7 +60,7 @@ class ValueExtractor {
   }
 
   private windowSize(): WindowSize {
-    return this.browser.getWindowSize();
+    return this.window.getSize();
   }
 }
 

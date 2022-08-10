@@ -1,4 +1,4 @@
-import { LocalStorage } from "../browser";
+import { LocalStorage } from "../browser/local_storage";
 import { JobConfig } from "../event_queue";
 import { JsonHelper } from "../json";
 import { Logger } from "../logger";
