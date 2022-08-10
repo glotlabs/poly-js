@@ -52,7 +52,7 @@ function captureValueFromElement(
     elementId: config.elementId,
   });
 
-  return `Failed to capture element value from element with id: '${config.elementId}'`;
+  return "";
 }
 
 function captureValueFromLocalStorage(
