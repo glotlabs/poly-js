@@ -1,7 +1,14 @@
-import { Browser } from "./browser";
+import { Browser, LocalStorage } from "./browser";
+import { LocalStorageEffectHandler } from "./effect/local_storage";
 import { NavigationEffectHandler } from "./effect/navigation";
+import { JobConfig } from "./event_queue";
 import { Logger } from "./logger";
-import { Effect, NavigationEffect } from "./rust_types";
+import {
+  Effect,
+  LocalStorageEffect,
+  Msg,
+  NavigationEffect,
+} from "./rust_types";
 
 interface State {
   customEffectHandler: (effect: any) => void;
@@ -9,6 +16,7 @@ interface State {
 
 class EffectHandler {
   private readonly navigationHandler: NavigationEffectHandler;
+  private readonly localstorageHandler: LocalStorageEffectHandler;
 
   private readonly state: State = {
     customEffectHandler: () => {},
@@ -16,19 +24,32 @@ class EffectHandler {
 
   constructor(
     private readonly browser: Browser,
-    private readonly logger: Logger
+    private readonly localStorage: LocalStorage,
+    private readonly logger: Logger,
+    private readonly onMsg: (msg: Msg, jobConfig: JobConfig) => void
   ) {
     this.navigationHandler = new NavigationEffectHandler(
       this.browser,
       this.logger
     );
+
+    this.localstorageHandler = new LocalStorageEffectHandler(
+      this.localStorage,
+      this.logger,
+      this.onMsg
+    );
   }
 
   public handle(effects: Effect[]) {
     const groupedEffects = groupEffects(effects, this.logger);
+    this.logger.debug("Handling effects", groupedEffects);
 
     groupedEffects.navigationEffects.forEach((effect) => {
       this.navigationHandler.handle(effect);
+    });
+
+    groupedEffects.localStorageEffects.forEach((effect) => {
+      this.localstorageHandler.handle(effect);
     });
 
     groupedEffects.customEffects.forEach((effect) => {
@@ -43,12 +64,14 @@ class EffectHandler {
 
 interface GroupedEffects {
   navigationEffects: NavigationEffect[];
+  localStorageEffects: LocalStorageEffect[];
   customEffects: any[];
 }
 
 function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
   const groupedEffects: GroupedEffects = {
     navigationEffects: [],
+    localStorageEffects: [],
     customEffects: [],
   };
 
@@ -57,6 +80,12 @@ function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
       case "navigation":
         groupedEffects.navigationEffects.push(
           effect.config as NavigationEffect
+        );
+        break;
+
+      case "localStorage":
+        groupedEffects.localStorageEffects.push(
+          effect.config as LocalStorageEffect
         );
         break;
 

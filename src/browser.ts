@@ -13,6 +13,21 @@ interface Browser {
   replaceUrl(url: string): void;
 }
 
+interface LocalStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+}
+
+class BrowserLocalStorage implements LocalStorage {
+  public getItem(key: string) {
+    return localStorage.getItem(key);
+  }
+
+  public setItem(key: string, value: string) {
+    return localStorage.setItem(key, value);
+  }
+}
+
 class RealBrowser implements Browser {
   public getElementById(id: string): HTMLElement | null {
     return document.getElementById(id);
@@ -110,4 +125,12 @@ interface WindowSize {
   height: number;
 }
 
-export { Browser, RealBrowser, AbortFn, listenTargetFromString, WindowSize };
+export {
+  Browser,
+  RealBrowser,
+  LocalStorage,
+  BrowserLocalStorage,
+  AbortFn,
+  listenTargetFromString,
+  WindowSize,
+};

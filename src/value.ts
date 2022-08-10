@@ -1,9 +1,14 @@
-import { Browser, WindowSize } from "./browser";
+import { Browser, LocalStorage, WindowSize } from "./browser";
 import { Logger } from "./logger";
-import { CaptureType, CaptureValueFromElement } from "./rust_types";
+import {
+  CaptureType,
+  CaptureValueFromElement,
+  CaptureValueFromLocalStorage,
+} from "./rust_types";
 
 function captureValue(
   browser: Browser,
+  localStorage: LocalStorage,
   captureType: CaptureType,
   logger: Logger
 ): any {
@@ -12,6 +17,13 @@ function captureValue(
       return captureValueFromElement(
         browser,
         captureType.config as CaptureValueFromElement,
+        logger
+      );
+
+    case "valueFromLocalStorage":
+      return captureValueFromLocalStorage(
+        localStorage,
+        captureType.config as CaptureValueFromLocalStorage,
         logger
       );
 
@@ -41,6 +53,19 @@ function captureValueFromElement(
   });
 
   return `Failed to capture element value from element with id: '${config.elementId}'`;
+}
+
+function captureValueFromLocalStorage(
+  localStorage: LocalStorage,
+  config: CaptureValueFromLocalStorage,
+  logger: Logger
+): any {
+  const value = localStorage.getItem(config.key);
+  if (value == null) {
+    return null;
+  }
+
+  return safeJsonParse(value, logger);
 }
 
 function captureWindowSize(browser: Browser): WindowSize {

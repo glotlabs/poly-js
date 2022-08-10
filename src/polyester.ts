@@ -1,5 +1,10 @@
 import morphdom from "morphdom";
-import { Browser, RealBrowser } from "./browser";
+import {
+  Browser,
+  BrowserLocalStorage,
+  LocalStorage,
+  RealBrowser,
+} from "./browser";
 import { SubscriptionManager } from "./subscription";
 import { defaultJobConfig, EventQueue, JobConfig } from "./event_queue";
 import { BrowserLogger, Logger } from "./logger";
@@ -18,6 +23,7 @@ interface State {
 class Polyester {
   private readonly appElem: HTMLElement;
   private readonly browser: Browser;
+  private readonly localStorage: LocalStorage;
   private readonly logger: Logger;
   private readonly eventQueue: EventQueue;
   private readonly subscriptionManager: SubscriptionManager;
@@ -29,6 +35,7 @@ class Polyester {
 
   constructor(private readonly page: Page, private readonly config?: Config) {
     this.browser = new RealBrowser();
+    this.localStorage = new BrowserLocalStorage();
     this.logger = new BrowserLogger({
       debug: config?.debug ?? false,
     });
@@ -47,7 +54,14 @@ class Polyester {
         this.queueUpdate(msg, jobConfig);
       }
     );
-    this.effectHandler = new EffectHandler(this.browser, this.logger);
+    this.effectHandler = new EffectHandler(
+      this.browser,
+      this.localStorage,
+      this.logger,
+      (msg, jobConfig) => {
+        this.queueUpdate(msg, jobConfig);
+      }
+    );
 
     const { model, effects } = page.init();
     this.state.model = model;
@@ -112,6 +126,7 @@ class Polyester {
       if (isObject(msg) && "type" in Object(value)) {
         const newValue = captureValue(
           this.browser,
+          this.localStorage,
           value as CaptureType,
           this.logger
         );
@@ -140,6 +155,8 @@ class Polyester {
 
   private update(msg: Msg) {
     const realMsg = this.replaceMsgPlaceholder(msg);
+    this.logger.debug("Sending msg to page", { msg: realMsg });
+
     const { model, effects } = this.page.update(realMsg, this.state.model);
 
     this.state.model = model;

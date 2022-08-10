@@ -17,12 +17,17 @@ interface ModelAndEffects {
 
 interface Effect {
   type: string;
-  config: NavigationEffect;
+  config: NavigationEffect | LocalStorageEffect;
 }
 
 interface NavigationEffect {
   type: string;
   config: string;
+}
+
+interface LocalStorageEffect {
+  type: string;
+  config: LocalStorageGetItem | LocalStorageSetItem;
 }
 
 interface Subscription {
@@ -99,11 +104,25 @@ interface DebounceConfig {
 
 interface CaptureType {
   type: string;
-  config: CaptureValueFromElement;
+  config: CaptureValueFromElement | CaptureValueFromLocalStorage;
 }
 
 interface CaptureValueFromElement {
   elementId: string;
+}
+
+interface CaptureValueFromLocalStorage {
+  key: string;
+}
+
+interface LocalStorageGetItem {
+  key: string;
+  msg: Msg;
+}
+
+interface LocalStorageSetItem {
+  key: string;
+  value: any;
 }
 
 export {
@@ -122,7 +141,11 @@ export {
   KeyboardComboMatcher,
   CaptureType,
   CaptureValueFromElement,
+  CaptureValueFromLocalStorage,
   QueueStrategy,
   Effect,
   NavigationEffect,
+  LocalStorageEffect,
+  LocalStorageGetItem,
+  LocalStorageSetItem,
 };
