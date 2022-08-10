@@ -1,6 +1,6 @@
 import { AbortFn, Browser } from "../browser";
 import { JobConfig, queueStrategyFromString } from "../event_queue";
-import { Logger } from "../logger";
+import { DebugDomain, Logger, Verbosity } from "../logger";
 import { Msg, RustInterval } from "../rust_types";
 
 interface ActiveInterval {
@@ -29,10 +29,15 @@ class IntervalManager {
     const { intervalsToRemove, intervalsToKeep, intervalsToAdd } =
       prepareIntervalsDelta(oldIntervals, newIntervals);
 
-    this.logger.debug("Updating intervals", {
-      removing: intervalsToRemove,
-      keeping: intervalsToKeep,
-      adding: intervalsToAdd,
+    this.logger.debug({
+      domain: DebugDomain.Interval,
+      verbosity: Verbosity.Normal,
+      message: "Updating intervals",
+      context: {
+        removing: intervalsToRemove,
+        keeping: intervalsToKeep,
+        adding: intervalsToAdd,
+      },
     });
 
     this.stopIntervals(intervalsToRemove);
@@ -44,12 +49,6 @@ class IntervalManager {
     this.state.intervals = [...intervalsToKeep, ...addedIntervals];
   }
 
-  private stopIntervals(intervals: ActiveInterval[]) {
-    intervals.forEach((interval) => {
-      interval.abort.abort();
-    });
-  }
-
   private startInterval(interval: RustInterval): ActiveInterval {
     const abort = this.browser.setInterval(() => {
       this.onMsg(interval.msg, {
@@ -58,10 +57,36 @@ class IntervalManager {
       });
     }, interval.duration);
 
+    this.logger.debug({
+      domain: DebugDomain.Interval,
+      verbosity: Verbosity.Verbose,
+      message: "Started interval",
+      context: {
+        id: interval.id,
+        duration: interval.duration,
+      },
+    });
+
     return {
       abort,
       interval,
     };
+  }
+
+  private stopIntervals(intervals: ActiveInterval[]) {
+    intervals.forEach((interval) => {
+      interval.abort.abort();
+
+      this.logger.debug({
+        domain: DebugDomain.Interval,
+        verbosity: Verbosity.Verbose,
+        message: "Stopped interval",
+        context: {
+          id: interval.interval.id,
+          duration: interval.interval.duration,
+        },
+      });
+    });
   }
 }
 

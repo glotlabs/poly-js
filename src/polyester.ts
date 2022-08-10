@@ -2,8 +2,15 @@ import morphdom from "morphdom";
 import { Browser, RealBrowser } from "./browser";
 import { SubscriptionManager } from "./subscription";
 import { defaultJobConfig, EventQueue, JobConfig } from "./event_queue";
-import { BrowserLogger, Logger } from "./logger";
-import { CaptureType, Model, Msg, Page } from "./rust_types";
+import {
+  BrowserLogger,
+  Logger,
+  Config as LoggerConfig,
+  defaultLoggerConfig,
+  DebugDomain,
+  Verbosity,
+} from "./logger";
+import { CaptureType, Effect, Model, Msg, Page } from "./rust_types";
 import { ValueExtractor } from "./value_extractor";
 import { EffectHandler } from "./effect";
 import { JsonHelper } from "./json";
@@ -11,7 +18,7 @@ import { BrowserLocalStorage, LocalStorage } from "./browser/local_storage";
 import { BrowserWindow, Window } from "./browser/window";
 
 interface Config {
-  debug?: boolean;
+  loggerConfig?: LoggerConfig;
 }
 
 interface State {
@@ -46,9 +53,9 @@ class Polyester {
     this.appElem = appElem;
     this.window = new BrowserWindow();
     this.localStorage = new BrowserLocalStorage();
-    this.logger = new BrowserLogger({
-      debug: config?.debug ?? false,
-    });
+    this.logger = new BrowserLogger(
+      config?.loggerConfig ?? defaultLoggerConfig()
+    );
     this.jsonHelper = new JsonHelper(this.logger);
     this.valueExtractor = new ValueExtractor(
       this.browser,
@@ -76,12 +83,7 @@ class Polyester {
     );
 
     const { model, effects } = page.init();
-    this.state.model = model;
-    this.initialRender();
-
-    const subscriptions = this.page.getSubscriptions(this.state.model);
-    this.subscriptionManager.handle(subscriptions);
-    this.effectHandler.handle(effects);
+    this.handleModelAndEffects(model, effects);
   }
 
   public getModel(): Model {
@@ -122,11 +124,15 @@ class Polyester {
         return true;
       },
     });
-  }
 
-  private initialRender() {
-    const markup = this.page.viewBody(this.state.model);
-    this.updateDom(markup);
+    this.logger.debug({
+      domain: DebugDomain.Core,
+      verbosity: Verbosity.Verbose,
+      message: "Updated DOM with new markup",
+      context: {
+        markup: markup,
+      },
+    });
   }
 
   private replaceMsgPlaceholder(msg: Msg) {
@@ -161,12 +167,22 @@ class Polyester {
 
   private update(msg: Msg) {
     const realMsg = this.replaceMsgPlaceholder(msg);
-    this.logger.debug("Sending msg to page", { msg: realMsg });
+
+    this.logger.debug({
+      domain: DebugDomain.Core,
+      verbosity: Verbosity.Normal,
+      message: "Sending msg to rust",
+      context: {
+        msg: realMsg,
+      },
+    });
 
     const { model, effects } = this.page.update(realMsg, this.state.model);
+    this.handleModelAndEffects(model, effects);
+  }
 
+  private handleModelAndEffects(model: Model, effects: Effect[]) {
     this.state.model = model;
-
     const markup = this.page.viewBody(this.state.model);
     this.updateDom(markup);
 

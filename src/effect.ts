@@ -5,7 +5,7 @@ import { LocalStorageEffectHandler } from "./effect/local_storage";
 import { NavigationEffectHandler } from "./effect/navigation";
 import { JobConfig } from "./event_queue";
 import { JsonHelper } from "./json";
-import { Logger } from "./logger";
+import { DebugDomain, Logger, Verbosity } from "./logger";
 import {
   Effect,
   LocalStorageEffect,
@@ -45,7 +45,13 @@ class EffectHandler {
 
   public handle(effects: Effect[]) {
     const groupedEffects = groupEffects(effects, this.logger);
-    this.logger.debug("Handling effects", groupedEffects);
+
+    this.logger.debug({
+      domain: DebugDomain.Effects,
+      verbosity: Verbosity.Normal,
+      message: "Handling effects",
+      context: groupedEffects,
+    });
 
     groupedEffects.navigationEffects.forEach((effect) => {
       this.navigationHandler.handle(effect);

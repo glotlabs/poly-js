@@ -1,6 +1,6 @@
 import { Browser } from "./browser";
 import { JobConfig } from "./event_queue";
-import { Logger } from "./logger";
+import { DebugDomain, Logger, Verbosity } from "./logger";
 import {
   Subscription,
   RustEventListener,
@@ -34,6 +34,13 @@ class SubscriptionManager {
 
   public handle(subscriptions: Subscription[]) {
     const groupedSubscriptions = groupSubscriptions(subscriptions, this.logger);
+
+    this.logger.debug({
+      domain: DebugDomain.Subscriptions,
+      verbosity: Verbosity.Normal,
+      message: "Handling subscriptions",
+      context: groupedSubscriptions,
+    });
 
     this.eventListenerManager.setEventListeners(
       groupedSubscriptions.eventListeners

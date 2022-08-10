@@ -2,7 +2,7 @@ import { Browser } from "./browser";
 import { LocalStorage } from "./browser/local_storage";
 import { Window, WindowSize } from "./browser/window";
 import { JsonHelper } from "./json";
-import { Logger } from "./logger";
+import { DebugDomain, Logger, Verbosity } from "./logger";
 import {
   CaptureType,
   CaptureValueFromElement,
@@ -40,7 +40,20 @@ class ValueExtractor {
     const elem = this.browser.getElementById(elementId) as HTMLInputElement;
 
     if (elem && elem.value) {
-      return this.jsonHelper.parse(elem.value);
+      const jsonValue = this.jsonHelper.parse(elem.value);
+
+      this.logger.debug({
+        domain: DebugDomain.ValueExtractor,
+        verbosity: Verbosity.Normal,
+        message: "Got value from element",
+        context: {
+          elementId,
+          element: elem,
+          value: jsonValue,
+        },
+      });
+
+      return jsonValue;
     }
 
     this.logger.error("Failed to capture value from element", {
@@ -56,7 +69,19 @@ class ValueExtractor {
       return null;
     }
 
-    return this.jsonHelper.parse(value);
+    const jsonValue = this.jsonHelper.parse(value);
+
+    this.logger.debug({
+      domain: DebugDomain.ValueExtractor,
+      verbosity: Verbosity.Normal,
+      message: "Got value from localStorage",
+      context: {
+        key,
+        value: jsonValue,
+      },
+    });
+
+    return jsonValue;
   }
 
   private windowSize(): WindowSize {

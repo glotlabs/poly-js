@@ -1,6 +1,6 @@
 import { AbortFn, Browser, listenTargetFromString } from "../browser";
 import { JobConfig, queueStrategyFromString } from "../event_queue";
-import { Logger } from "../logger";
+import { DebugDomain, Logger, Verbosity } from "../logger";
 
 import {
   Msg,
@@ -38,10 +38,15 @@ class EventListenerManager {
     const { listenersToRemove, listenersToKeep, listenersToAdd } =
       prepareEventListenersDelta(oldListeners, newListeners);
 
-    this.logger.debug("Updating event listeners", {
-      removing: listenersToRemove,
-      keeping: listenersToKeep,
-      adding: listenersToAdd,
+    this.logger.debug({
+      domain: DebugDomain.EventListener,
+      verbosity: Verbosity.Normal,
+      message: "Updating event listeners",
+      context: {
+        removing: listenersToRemove,
+        keeping: listenersToKeep,
+        adding: listenersToAdd,
+      },
     });
 
     this.stopEventListeners(listenersToRemove);
@@ -68,10 +73,15 @@ class EventListenerManager {
       }
     );
 
-    this.logger.debug("Started listener", {
-      id: listener.id,
-      eventType: listener.eventType,
-      target: listener.listenTarget,
+    this.logger.debug({
+      domain: DebugDomain.EventListener,
+      verbosity: Verbosity.Verbose,
+      message: "Started event listener",
+      context: {
+        id: listener.id,
+        eventType: listener.eventType,
+        target: listener.listenTarget,
+      },
     });
 
     return {
@@ -83,6 +93,17 @@ class EventListenerManager {
   private stopEventListeners(listeners: ActiveEventListener[]) {
     listeners.forEach((listener) => {
       listener.abort.abort();
+
+      this.logger.debug({
+        domain: DebugDomain.EventListener,
+        verbosity: Verbosity.Verbose,
+        message: "Stopped event listener",
+        context: {
+          id: listener.listener.id,
+          eventType: listener.listener.eventType,
+          target: listener.listener.listenTarget,
+        },
+      });
     });
   }
 

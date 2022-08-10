@@ -1,7 +1,7 @@
 import { LocalStorage } from "../browser/local_storage";
 import { JobConfig } from "../event_queue";
 import { JsonHelper } from "../json";
-import { Logger } from "../logger";
+import { DebugDomain, Logger, Verbosity } from "../logger";
 import {
   LocalStorageEffect,
   LocalStorageGetItem,
@@ -45,6 +45,16 @@ class LocalStorageEffectHandler {
   private handleSetItem({ key, value }: LocalStorageSetItem): void {
     const jsonValue = this.jsonHelper.stringify(value);
     this.localStorage.setItem(key, jsonValue);
+
+    this.logger.debug({
+      domain: DebugDomain.LocalStorage,
+      verbosity: Verbosity.Normal,
+      message: "Saved value to localStorage",
+      context: {
+        key,
+        value: value,
+      },
+    });
   }
 }
 
