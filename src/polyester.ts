@@ -17,9 +17,14 @@ import { JsonHelper } from "./json";
 import { BrowserLocalStorage, LocalStorage } from "./browser/local_storage";
 import { BrowserWindow, Window } from "./browser/window";
 import { BrowserHistory, History } from "./browser/history";
+import {
+  Config as CustomEffectConfig,
+  defaultCustomEffectConfig,
+} from "./effect/custom";
 
 interface Config {
   loggerConfig?: LoggerConfig;
+  customEffectConfig?: CustomEffectConfig;
 }
 
 interface State {
@@ -76,6 +81,7 @@ class Polyester {
       }
     );
     this.effectHandler = new EffectHandler(
+      this.config?.customEffectConfig ?? defaultCustomEffectConfig(),
       this.history,
       this.localStorage,
       this.jsonHelper,

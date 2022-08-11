@@ -90,4 +90,10 @@ class CustomEffectHandler {
   }
 }
 
-export { CustomEffectHandler };
+function defaultCustomEffectConfig(): Config {
+  return {
+    useBacklog: true,
+  };
+}
+
+export { CustomEffectHandler, Config, defaultCustomEffectConfig };

@@ -7,6 +7,7 @@ import { NavigationEffectHandler } from "./effect/navigation";
 import { JobConfig } from "./event_queue";
 import { JsonHelper } from "./json";
 import { Domain, Logger, Verbosity } from "./logger";
+import { Config as CustomEffectConfig } from "./effect/custom";
 import {
   Effect,
   LocalStorageEffect,
@@ -20,6 +21,7 @@ class EffectHandler {
   private readonly customHandler: CustomEffectHandler;
 
   constructor(
+    private readonly customEffectConfig: CustomEffectConfig,
     private readonly history: History,
     private readonly localStorage: LocalStorage,
     private readonly jsonHelper: JsonHelper,
@@ -39,7 +41,7 @@ class EffectHandler {
     );
 
     this.customHandler = new CustomEffectHandler(
-      { useBacklog: true },
+      this.customEffectConfig,
       this.logger
     );
   }
