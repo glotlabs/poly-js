@@ -120,6 +120,7 @@ class EventListenerManager {
         context: {
           id: listener.id,
           type: listener.eventType,
+          target: listener.listenTarget,
           matchers: listener.matchers,
         },
       });
@@ -142,6 +143,7 @@ class EventListenerManager {
       context: {
         id: listener.id,
         type: listener.eventType,
+        target: listener.listenTarget,
         matchers: listener.matchers,
         msg: listener.msg,
       },

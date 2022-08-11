@@ -185,6 +185,13 @@ class Polyester {
   }
 
   private handleModelAndEffects(model: Model, effects: Effect[]) {
+    this.logger.debug({
+      domain: Domain.Core,
+      verbosity: Verbosity.Normal,
+      message: "Updating model",
+      context: { model },
+    });
+
     this.state.model = model;
     const markup = this.page.viewBody(this.state.model);
     this.updateDom(markup);
