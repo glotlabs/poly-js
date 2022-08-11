@@ -37,7 +37,10 @@ class BrowserLogger implements Logger {
   }
 
   public debug({ domain, verbosity, message, context }: DebugEntry): void {
-    if (this.validDomain(domain) && this.validVerbosity(verbosity)) {
+    if (
+      (this.validDomain(domain) && this.validVerbosity(verbosity)) ||
+      this.hasGlobalOverride()
+    ) {
       const logger = this.getDebugLogger();
       logger(`[${PREFIX}:${Domain[domain]}]`, message, context);
     }
@@ -72,6 +75,11 @@ class BrowserLogger implements Logger {
       case Verbosity.Verbose:
         return true;
     }
+  }
+
+  private hasGlobalOverride(): boolean {
+    // @ts-ignore
+    return window && "polyesterDebug" in window && window.polyesterDebug;
   }
 }
 
