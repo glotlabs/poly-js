@@ -47,7 +47,6 @@ interface RustEventListener {
   listenTarget: string;
   eventType: string;
   matchers: EventMatcher[];
-  selector: string;
   msg: Msg;
   propagation: EventPropagation;
   queueStrategy: string;

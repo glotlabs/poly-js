@@ -113,6 +113,17 @@ class EventListenerManager {
     });
 
     if (!matchesEvent) {
+      this.logger.debug({
+        domain: Domain.EventListener,
+        verbosity: Verbosity.Verbose,
+        message: "Event did not match",
+        context: {
+          id: listener.id,
+          type: listener.eventType,
+          matchers: listener.matchers,
+        },
+      });
+
       return;
     }
 
@@ -123,6 +134,18 @@ class EventListenerManager {
     if (listener.propagation.stopPropagation) {
       event.stopPropagation();
     }
+
+    this.logger.debug({
+      domain: Domain.EventListener,
+      verbosity: Verbosity.Normal,
+      message: "Event matched",
+      context: {
+        id: listener.id,
+        type: listener.eventType,
+        matchers: listener.matchers,
+        msg: listener.msg,
+      },
+    });
 
     this.onMsg(listener.msg, {
       id: listener.id,
