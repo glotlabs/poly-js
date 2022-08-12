@@ -40,11 +40,16 @@ class ValueExtractor {
     return null;
   }
 
-  private fromElementValue({ elementId }: CaptureValueFromElement): any {
+  private fromElementValue({
+    elementId,
+    parseAsJson,
+  }: CaptureValueFromElement): any {
     const elem = this.browser.getElementById(elementId) as HTMLInputElement;
 
-    if (elem && elem.value) {
-      const jsonValue = this.jsonHelper.parse(elem.value);
+    if (elem && elem.value !== undefined) {
+      const value = parseAsJson
+        ? this.jsonHelper.parse(elem.value)
+        : elem.value;
 
       this.logger.debug({
         domain: Domain.ValueExtractor,
@@ -52,17 +57,19 @@ class ValueExtractor {
         message: "Got value from element",
         context: {
           elementId,
-          value: jsonValue,
+          value,
         },
       });
 
-      return jsonValue;
+      return value;
     }
 
     this.logger.error({
       domain: Domain.ValueExtractor,
       message: "Failed to capture value from element",
-      context: { elementId },
+      context: {
+        elementId,
+      },
     });
 
     return null;

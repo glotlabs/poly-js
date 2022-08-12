@@ -108,6 +108,7 @@ interface CaptureType {
 
 interface CaptureValueFromElement {
   elementId: string;
+  parseAsJson: boolean;
 }
 
 interface CaptureValueFromLocalStorage {
