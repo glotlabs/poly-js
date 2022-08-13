@@ -1,4 +1,5 @@
 import { Browser } from "./browser";
+import { Date } from "./browser/date";
 import { LocalStorage } from "./browser/local_storage";
 import { Window, WindowSize } from "./browser/window";
 import { JsonHelper } from "./json";
@@ -8,11 +9,13 @@ import {
   CaptureValueFromElement,
   CaptureValueFromLocalStorage,
 } from "./rust_types";
+import { Posix, posixFromMilliseconds } from "./time";
 
 class ValueExtractor {
   constructor(
     private readonly browser: Browser,
     private readonly window: Window,
+    private readonly date: Date,
     private readonly localStorage: LocalStorage,
     private readonly jsonHelper: JsonHelper,
     private readonly logger: Logger
@@ -25,6 +28,9 @@ class ValueExtractor {
 
       case "valueFromLocalStorage":
         return this.fromLocalStorage(config as CaptureValueFromLocalStorage);
+
+      case "currentTime":
+        return this.currentTime();
 
       case "windowSize":
         return this.windowSize();
@@ -94,6 +100,11 @@ class ValueExtractor {
     });
 
     return jsonValue;
+  }
+
+  private currentTime(): Posix {
+    const now = this.date.now();
+    return posixFromMilliseconds(now);
   }
 
   private windowSize(): WindowSize {

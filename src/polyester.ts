@@ -21,6 +21,7 @@ import {
   Config as CustomEffectConfig,
   defaultCustomEffectConfig,
 } from "./effect/custom";
+import { BrowserDate, Date } from "./browser/date";
 
 interface Config {
   loggerConfig?: LoggerConfig;
@@ -35,6 +36,7 @@ class Polyester {
   private readonly appElem: HTMLElement;
   private readonly browser: Browser;
   private readonly window: Window;
+  private readonly date: Date;
   private readonly localStorage: LocalStorage;
   private readonly logger: Logger;
   private readonly jsonHelper: JsonHelper;
@@ -59,6 +61,7 @@ class Polyester {
 
     this.appElem = appElem;
     this.window = new BrowserWindow();
+    this.date = new BrowserDate();
     this.localStorage = new BrowserLocalStorage();
     this.logger = new BrowserLogger(
       config?.loggerConfig ?? defaultLoggerConfig()
@@ -67,6 +70,7 @@ class Polyester {
     this.valueExtractor = new ValueExtractor(
       this.browser,
       this.window,
+      this.date,
       this.localStorage,
       this.jsonHelper,
       this.logger
