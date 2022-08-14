@@ -1,7 +1,6 @@
 import morphdom from "morphdom";
 import { Browser, RealBrowser } from "./browser";
 import { SubscriptionManager } from "./subscription";
-import { defaultJobConfig, EventQueue, JobConfig } from "./event_queue";
 import {
   BrowserLogger,
   Logger,
@@ -40,7 +39,6 @@ class Polyester {
   private readonly logger: Logger;
   private readonly jsonHelper: JsonHelper;
   private readonly history: History;
-  private readonly eventQueue: EventQueue;
   private readonly subscriptionManager: SubscriptionManager;
   private readonly effectHandler: EffectHandler;
 
@@ -66,12 +64,11 @@ class Polyester {
     );
     this.jsonHelper = new JsonHelper(this.logger);
     this.history = new BrowserHistory();
-    this.eventQueue = new EventQueue(this.logger);
     this.subscriptionManager = new SubscriptionManager(
       this.browser,
       this.logger,
-      (msg, jobConfig) => {
-        this.queueUpdate(msg, jobConfig);
+      (msg) => {
+        this.update(msg);
       }
     );
     this.effectHandler = new EffectHandler(
@@ -83,8 +80,8 @@ class Polyester {
       this.localStorage,
       this.jsonHelper,
       this.logger,
-      (msg, jobConfig) => {
-        this.queueUpdate(msg, jobConfig);
+      (msg) => {
+        this.update(msg);
       }
     );
 
@@ -96,8 +93,9 @@ class Polyester {
     return this.state.model;
   }
 
-  public send(msg: any, jobConfig?: JobConfig) {
-    this.queueUpdate({ msg }, jobConfig ?? defaultJobConfig());
+  // TODO: Return proper types from RustEnum and replace any
+  public send(msg: any) {
+    this.update({ msg });
   }
 
   public onCustomEffect(handler: (effect: any) => void) {
@@ -161,19 +159,6 @@ class Polyester {
     });
 
     return Object.fromEntries(entries);
-  }
-
-  private queueUpdate(msg: Msg, jobConfig: JobConfig) {
-    if (!msg) {
-      return;
-    }
-
-    return this.eventQueue.enqueue({
-      config: jobConfig,
-      action: () => {
-        this.update(msg);
-      },
-    });
   }
 
   private update(msg: Msg) {

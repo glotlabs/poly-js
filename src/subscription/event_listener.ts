@@ -1,5 +1,4 @@
 import { AbortFn, Browser, listenTargetFromString } from "../browser";
-import { JobConfig, queueStrategyFromString } from "../event_queue";
 import { Domain, Logger, Verbosity } from "../logger";
 
 import {
@@ -30,7 +29,7 @@ class EventListenerManager {
   constructor(
     private readonly browser: Browser,
     private readonly logger: Logger,
-    private readonly onMsg: (msg: SubscriptionMsg, jobConfig: JobConfig) => void
+    private readonly onMsg: (msg: SubscriptionMsg) => void
   ) {}
 
   public setEventListeners(newListeners: RustEventListener[]) {
@@ -150,10 +149,7 @@ class EventListenerManager {
       },
     });
 
-    this.onMsg(listener.msg, {
-      id: listener.id,
-      strategy: queueStrategyFromString(listener.queueStrategy, this.logger),
-    });
+    this.onMsg(listener.msg);
   }
 
   private matchEvent(matcher: EventMatcher, event: Event): boolean {

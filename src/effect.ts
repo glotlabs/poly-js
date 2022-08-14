@@ -3,7 +3,6 @@ import { LocalStorage } from "./browser/local_storage";
 import { CustomEffectHandler } from "./effect/custom";
 import { LocalStorageEffectHandler } from "./effect/local_storage";
 import { NavigationEffectHandler } from "./effect/navigation";
-import { JobConfig } from "./event_queue";
 import { JsonHelper } from "./json";
 import { Domain, Logger, Verbosity } from "./logger";
 import { Config as CustomEffectConfig } from "./effect/custom";
@@ -14,7 +13,6 @@ import {
   LocalStorageEffect,
   Msg,
   NavigationEffect,
-  QueueStrategy,
   TimeEffect,
 } from "./rust_types";
 import { DomEffectHandler } from "./effect/dom";
@@ -39,7 +37,7 @@ class EffectHandler {
     private readonly localStorage: LocalStorage,
     private readonly jsonHelper: JsonHelper,
     private readonly logger: Logger,
-    private readonly onMsg: (msg: Msg, jobConfig: JobConfig) => void
+    private readonly onMsg: (msg: Msg) => void
   ) {
     this.domHandler = new DomEffectHandler(
       this.browser,
@@ -135,13 +133,7 @@ class EffectHandler {
   }
 
   private handleEffectfulMsg({ msg, effect }: EffectfulMsg): void {
-    this.onMsg(
-      { msg, effect },
-      {
-        id: "effectful-msg",
-        strategy: QueueStrategy.Fifo,
-      }
-    );
+    this.onMsg({ msg, effect });
   }
 }
 

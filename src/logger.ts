@@ -95,8 +95,6 @@ enum Domain {
   LocalStorage,
   Navigation,
   CustomEffect,
-  ValueExtractor,
-  EventQueue,
 }
 
 enum DebugLogger {

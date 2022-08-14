@@ -1,5 +1,4 @@
 import { Browser } from "./browser";
-import { JobConfig } from "./event_queue";
 import { Domain, Logger, Verbosity } from "./logger";
 import {
   Subscription,
@@ -19,18 +18,18 @@ class SubscriptionManager {
   constructor(
     private readonly browser: Browser,
     private readonly logger: Logger,
-    private readonly onMsg: (msg: Msg, jobConfig: JobConfig) => void
+    private readonly onMsg: (msg: Msg) => void
   ) {
     this.eventListenerManager = new EventListenerManager(
       this.browser,
       this.logger,
-      (msg, jobConfig) => this.onSubscriptionMsg(msg, jobConfig)
+      (msg) => this.onSubscriptionMsg(msg)
     );
 
     this.intervalManager = new IntervalManager(
       this.browser,
       this.logger,
-      (msg, jobConfig) => this.onSubscriptionMsg(msg, jobConfig)
+      (msg) => this.onSubscriptionMsg(msg)
     );
   }
 
@@ -51,9 +50,9 @@ class SubscriptionManager {
     this.intervalManager.setIntervals(groupedSubscriptions.intervals);
   }
 
-  private onSubscriptionMsg(subMsg: SubscriptionMsg, jobConfig: JobConfig) {
+  private onSubscriptionMsg(subMsg: SubscriptionMsg) {
     const msg = this.prepareMsg(subMsg);
-    this.onMsg(msg, jobConfig);
+    this.onMsg(msg);
   }
 
   private prepareMsg(subMsg: SubscriptionMsg): Msg {

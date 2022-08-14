@@ -68,7 +68,6 @@ interface RustInterval {
   id: string;
   duration: number;
   msg: SubscriptionMsg;
-  queueStrategy: string;
 }
 
 interface RustEventListener {
@@ -78,12 +77,6 @@ interface RustEventListener {
   matchers: EventMatcher[];
   msg: SubscriptionMsg;
   propagation: EventPropagation;
-  queueStrategy: string;
-}
-
-enum QueueStrategy {
-  Fifo,
-  DropOlder,
 }
 
 interface EventMatcher {
@@ -153,7 +146,6 @@ export {
   ClosestSelectorMatcher,
   KeyboardKeyMatcher,
   KeyboardComboMatcher,
-  QueueStrategy,
   Effect,
   NavigationEffect,
   LocalStorageEffect,

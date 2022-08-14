@@ -1,13 +1,10 @@
 import { LocalStorage } from "../browser/local_storage";
-import { JobConfig } from "../event_queue";
 import { JsonHelper } from "../json";
 import { Domain, Logger, Verbosity } from "../logger";
 import {
   LocalStorageEffect,
   LocalStorageGetItem,
   LocalStorageSetItem,
-  Msg,
-  QueueStrategy,
 } from "../rust_types";
 
 class LocalStorageEffectHandler {

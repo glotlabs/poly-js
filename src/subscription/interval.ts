@@ -1,5 +1,4 @@
 import { AbortFn, Browser } from "../browser";
-import { JobConfig, queueStrategyFromString } from "../event_queue";
 import { Domain, Logger, Verbosity } from "../logger";
 import { Msg, RustInterval, SubscriptionMsg } from "../rust_types";
 
@@ -20,7 +19,7 @@ class IntervalManager {
   constructor(
     private readonly browser: Browser,
     private readonly logger: Logger,
-    private readonly onMsg: (msg: SubscriptionMsg, jobConfig: JobConfig) => void
+    private readonly onMsg: (msg: SubscriptionMsg) => void
   ) {}
 
   public setIntervals(newIntervals: RustInterval[]) {
@@ -51,10 +50,7 @@ class IntervalManager {
 
   private startInterval(interval: RustInterval): ActiveInterval {
     const abort = this.browser.setInterval(() => {
-      this.onMsg(interval.msg, {
-        id: interval.id,
-        strategy: queueStrategyFromString(interval.queueStrategy, this.logger),
-      });
+      this.onMsg(interval.msg);
     }, interval.duration);
 
     this.logger.debug({
