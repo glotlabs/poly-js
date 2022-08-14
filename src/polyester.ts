@@ -84,13 +84,11 @@ class Polyester {
         this.update(msg);
       }
     );
-
-    const { model, effects } = page.init();
-    this.handleModelAndEffects(model, effects);
   }
 
-  public getModel(): Model {
-    return this.state.model;
+  public init() {
+    const { model, effects } = this.page.init();
+    this.handleModelAndEffects(model, effects);
   }
 
   // TODO: Return proper types from RustEnum and replace any
