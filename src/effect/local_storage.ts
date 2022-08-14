@@ -14,19 +14,16 @@ class LocalStorageEffectHandler {
   constructor(
     private readonly localStorage: LocalStorage,
     private readonly jsonHelper: JsonHelper,
-    private readonly logger: Logger,
-    private readonly onMsg: (msg: Msg, jobConfig: JobConfig) => void
+    private readonly logger: Logger
   ) {}
 
-  public handle(effect: LocalStorageEffect): void {
+  public handle(effect: LocalStorageEffect): any {
     switch (effect.type) {
       case "getItem":
-        this.handleGetItem(effect.config as LocalStorageGetItem);
-        break;
+        return this.handleGetItem(effect.config as LocalStorageGetItem);
 
       case "setItem":
-        this.handleSetItem(effect.config as LocalStorageSetItem);
-        break;
+        return this.handleSetItem(effect.config as LocalStorageSetItem);
 
       default:
         this.logger.warn({
@@ -37,11 +34,25 @@ class LocalStorageEffectHandler {
     }
   }
 
-  private handleGetItem({ key, msg }: LocalStorageGetItem): void {
-    this.onMsg(msg, {
-      id: `localstorage-get-${key}`,
-      strategy: QueueStrategy.DropOlder,
+  private handleGetItem({ key }: LocalStorageGetItem): any {
+    const value = this.localStorage.getItem(key);
+    if (value == null) {
+      return null;
+    }
+
+    const jsonValue = this.jsonHelper.parse(value);
+
+    this.logger.debug({
+      domain: Domain.LocalStorage,
+      verbosity: Verbosity.Normal,
+      message: "Read value from localStorage",
+      context: {
+        key,
+        value: jsonValue,
+      },
     });
+
+    return jsonValue;
   }
 
   private handleSetItem({ key, value }: LocalStorageSetItem): void {

@@ -10,8 +10,7 @@ import {
   Domain,
   Verbosity,
 } from "./logger";
-import { CaptureType, Effect, Model, Msg, Page } from "./rust_types";
-import { ValueExtractor } from "./value_extractor";
+import { Effect, Model, Msg, Page } from "./rust_types";
 import { EffectHandler } from "./effect";
 import { JsonHelper } from "./json";
 import { BrowserLocalStorage, LocalStorage } from "./browser/local_storage";
@@ -40,7 +39,6 @@ class Polyester {
   private readonly localStorage: LocalStorage;
   private readonly logger: Logger;
   private readonly jsonHelper: JsonHelper;
-  private readonly valueExtractor: ValueExtractor;
   private readonly history: History;
   private readonly eventQueue: EventQueue;
   private readonly subscriptionManager: SubscriptionManager;
@@ -67,14 +65,6 @@ class Polyester {
       config?.loggerConfig ?? defaultLoggerConfig()
     );
     this.jsonHelper = new JsonHelper(this.logger);
-    this.valueExtractor = new ValueExtractor(
-      this.browser,
-      this.window,
-      this.date,
-      this.localStorage,
-      this.jsonHelper,
-      this.logger
-    );
     this.history = new BrowserHistory();
     this.eventQueue = new EventQueue(this.logger);
     this.subscriptionManager = new SubscriptionManager(
@@ -86,6 +76,9 @@ class Polyester {
     );
     this.effectHandler = new EffectHandler(
       this.config?.customEffectConfig ?? defaultCustomEffectConfig(),
+      this.browser,
+      this.window,
+      this.date,
       this.history,
       this.localStorage,
       this.jsonHelper,
@@ -103,8 +96,8 @@ class Polyester {
     return this.state.model;
   }
 
-  public send(msg: Msg, jobConfig?: JobConfig) {
-    this.queueUpdate(msg, jobConfig ?? defaultJobConfig());
+  public send(msg: any, jobConfig?: JobConfig) {
+    this.queueUpdate({ msg }, jobConfig ?? defaultJobConfig());
   }
 
   public onCustomEffect(handler: (effect: any) => void) {
@@ -148,15 +141,20 @@ class Polyester {
     });
   }
 
-  private replaceMsgPlaceholder(msg: Msg) {
-    if (!isObject(msg)) {
-      return msg;
+  private prepareMsg(msg: Msg): any {
+    if (!("effect" in msg)) {
+      return msg.msg;
     }
 
-    const entries = Object.entries(msg).map(([key, value]) => {
-      if (isObject(msg) && "type" in Object(value)) {
-        const newValue = this.valueExtractor.extract(value as CaptureType);
-        return [key, newValue];
+    const effectResult = this.effectHandler.run(msg.effect);
+
+    if (!isObject(msg.msg)) {
+      return msg.msg;
+    }
+
+    const entries = Object.entries(msg.msg).map(([key, value]) => {
+      if (value == null) {
+        return [key, effectResult];
       } else {
         return [key, value];
       }
@@ -179,7 +177,7 @@ class Polyester {
   }
 
   private update(msg: Msg) {
-    const realMsg = this.replaceMsgPlaceholder(msg);
+    const realMsg = this.prepareMsg(msg);
 
     this.logger.debug({
       domain: Domain.Core,

@@ -10,6 +10,7 @@ import {
   KeyboardComboMatcher,
   KeyboardKeyMatcher,
   RustEventListener,
+  SubscriptionMsg,
 } from "../rust_types";
 
 interface ActiveEventListener {
@@ -29,7 +30,7 @@ class EventListenerManager {
   constructor(
     private readonly browser: Browser,
     private readonly logger: Logger,
-    private readonly onMsg: (msg: Msg, jobConfig: JobConfig) => void
+    private readonly onMsg: (msg: SubscriptionMsg, jobConfig: JobConfig) => void
   ) {}
 
   public setEventListeners(newListeners: RustEventListener[]) {

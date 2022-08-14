@@ -1,7 +1,7 @@
 import { AbortFn, Browser } from "../browser";
 import { JobConfig, queueStrategyFromString } from "../event_queue";
 import { Domain, Logger, Verbosity } from "../logger";
-import { Msg, RustInterval } from "../rust_types";
+import { Msg, RustInterval, SubscriptionMsg } from "../rust_types";
 
 interface ActiveInterval {
   abort: AbortFn;
@@ -20,7 +20,7 @@ class IntervalManager {
   constructor(
     private readonly browser: Browser,
     private readonly logger: Logger,
-    private readonly onMsg: (msg: Msg, jobConfig: JobConfig) => void
+    private readonly onMsg: (msg: SubscriptionMsg, jobConfig: JobConfig) => void
   ) {}
 
   public setIntervals(newIntervals: RustInterval[]) {

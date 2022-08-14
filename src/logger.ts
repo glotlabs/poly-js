@@ -90,6 +90,8 @@ enum Domain {
   EventListener,
   Interval,
   Effects,
+  Dom,
+  Time,
   LocalStorage,
   Navigation,
   CustomEffect,

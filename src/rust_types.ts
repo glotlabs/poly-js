@@ -1,6 +1,15 @@
 type Model = any;
 
-type Msg = any;
+type Msg = PureMsg | EffectfulMsg;
+
+interface PureMsg {
+  msg: any;
+}
+
+interface SubscriptionMsg {
+  type: string;
+  config: EffectfulMsg | any;
+}
 
 interface Page {
   id(): string;
@@ -10,14 +19,14 @@ interface Page {
   viewBody(model: Model): string;
 }
 
-interface ModelAndEffects {
-  model: Model;
-  effects: Effect[];
-}
-
 interface Effect {
   type: string;
-  config: NavigationEffect | LocalStorageEffect;
+  config:
+    | DomEffect
+    | TimeEffect
+    | NavigationEffect
+    | LocalStorageEffect
+    | EffectfulMsg;
 }
 
 interface NavigationEffect {
@@ -25,9 +34,29 @@ interface NavigationEffect {
   config: string;
 }
 
+interface DomEffect {
+  type: string;
+  config: GetElementValue;
+}
+
+interface TimeEffect {
+  type: string;
+  config: any;
+}
+
+interface GetElementValue {
+  elementId: string;
+  parseAsJson: boolean;
+}
+
 interface LocalStorageEffect {
   type: string;
   config: LocalStorageGetItem | LocalStorageSetItem;
+}
+
+interface EffectfulMsg {
+  msg: any;
+  effect: Effect;
 }
 
 interface Subscription {
@@ -38,7 +67,7 @@ interface Subscription {
 interface RustInterval {
   id: string;
   duration: number;
-  msg: Msg;
+  msg: SubscriptionMsg;
   queueStrategy: string;
 }
 
@@ -47,7 +76,7 @@ interface RustEventListener {
   listenTarget: string;
   eventType: string;
   matchers: EventMatcher[];
-  msg: Msg;
+  msg: SubscriptionMsg;
   propagation: EventPropagation;
   queueStrategy: string;
 }
@@ -101,23 +130,8 @@ interface DebounceConfig {
   trailing: boolean;
 }
 
-interface CaptureType {
-  type: string;
-  config: CaptureValueFromElement | CaptureValueFromLocalStorage;
-}
-
-interface CaptureValueFromElement {
-  elementId: string;
-  parseAsJson: boolean;
-}
-
-interface CaptureValueFromLocalStorage {
-  key: string;
-}
-
 interface LocalStorageGetItem {
   key: string;
-  msg: Msg;
 }
 
 interface LocalStorageSetItem {
@@ -139,13 +153,16 @@ export {
   ClosestSelectorMatcher,
   KeyboardKeyMatcher,
   KeyboardComboMatcher,
-  CaptureType,
-  CaptureValueFromElement,
-  CaptureValueFromLocalStorage,
   QueueStrategy,
   Effect,
   NavigationEffect,
   LocalStorageEffect,
   LocalStorageGetItem,
   LocalStorageSetItem,
+  EffectfulMsg,
+  PureMsg,
+  SubscriptionMsg,
+  DomEffect,
+  TimeEffect,
+  GetElementValue,
 };

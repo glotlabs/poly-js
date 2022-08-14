@@ -6,6 +6,8 @@ import {
   RustEventListener,
   RustInterval,
   Msg,
+  SubscriptionMsg,
+  EffectfulMsg,
 } from "./rust_types";
 import { EventListenerManager } from "./subscription/event_listener";
 import { IntervalManager } from "./subscription/interval";
@@ -22,13 +24,13 @@ class SubscriptionManager {
     this.eventListenerManager = new EventListenerManager(
       this.browser,
       this.logger,
-      this.onMsg
+      (msg, jobConfig) => this.onSubscriptionMsg(msg, jobConfig)
     );
 
     this.intervalManager = new IntervalManager(
       this.browser,
       this.logger,
-      this.onMsg
+      (msg, jobConfig) => this.onSubscriptionMsg(msg, jobConfig)
     );
   }
 
@@ -47,6 +49,32 @@ class SubscriptionManager {
     );
 
     this.intervalManager.setIntervals(groupedSubscriptions.intervals);
+  }
+
+  private onSubscriptionMsg(subMsg: SubscriptionMsg, jobConfig: JobConfig) {
+    const msg = this.prepareMsg(subMsg);
+    this.onMsg(msg, jobConfig);
+  }
+
+  private prepareMsg(subMsg: SubscriptionMsg): Msg {
+    switch (subMsg.type) {
+      case "pure":
+        return {
+          msg: subMsg.config as any,
+        };
+
+      case "effectful":
+        return subMsg.config as EffectfulMsg;
+
+      default:
+        this.logger.warn({
+          domain: Domain.Subscriptions,
+          message: "Unknown subscription msg type",
+          context: { type: subMsg.type },
+        });
+    }
+
+    throw new Error(`Unknown subscription msg type: ${subMsg.type}`);
   }
 }
 

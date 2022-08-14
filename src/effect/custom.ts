@@ -20,9 +20,9 @@ class CustomEffectHandler {
     private readonly logger: Logger
   ) {}
 
-  public handle(effect: any): void {
+  public handle(effect: any): any {
     if (this.state.handler) {
-      this.safeHandle(this.state.handler, effect);
+      return this.safeHandle(this.state.handler, effect);
     } else {
       if (this.config.useBacklog) {
         this.addToBacklog(effect);
@@ -77,9 +77,9 @@ class CustomEffectHandler {
     });
   }
 
-  private safeHandle(handler: (effect: any) => void, effect: any) {
+  private safeHandle(handler: (effect: any) => any, effect: any): any {
     try {
-      handler(effect);
+      return handler(effect);
     } catch (e) {
       this.logger.error({
         domain: Domain.CustomEffect,
