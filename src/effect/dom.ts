@@ -35,12 +35,12 @@ class DomEffectHandler {
 
   private getElementValue({ elementId, parseAsJson }: GetElementValue): any {
     const elem = this.browser.getElementById(elementId) as HTMLInputElement;
-    const rawValue = elem?.value;
+    const stringValue = elem?.value;
 
-    if (rawValue) {
+    if (isString(stringValue)) {
       const value = parseAsJson
-        ? this.jsonHelper.parse(elem.value)
-        : elem.value;
+        ? this.jsonHelper.parse(stringValue)
+        : stringValue;
 
       this.logger.debug({
         domain: Domain.Dom,
@@ -65,6 +65,10 @@ class DomEffectHandler {
 
     return null;
   }
+}
+
+function isString(value: any): boolean {
+  return typeof value === "string";
 }
 
 export { DomEffectHandler };
