@@ -149,7 +149,7 @@ class Polyester {
     }
 
     const entries = Object.entries(msg.msg).map(([key, value]) => {
-      if (value == null) {
+      if (value === null || value === "") {
         return [key, effectResult];
       } else {
         return [key, value];
