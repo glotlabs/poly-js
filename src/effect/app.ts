@@ -9,7 +9,7 @@ interface Config {
   useBacklog: boolean;
 }
 
-class CustomEffectHandler {
+class AppEffectHandler {
   private readonly state: State = {
     handler: null,
     effectBacklog: [],
@@ -43,7 +43,7 @@ class CustomEffectHandler {
       this.state.effectBacklog.push(effect);
 
       this.logger.debug({
-        domain: Domain.CustomEffect,
+        domain: Domain.AppEffect,
         verbosity: Verbosity.Normal,
         message: "Added effect to backlog",
         context: {
@@ -52,7 +52,7 @@ class CustomEffectHandler {
       });
     } else {
       this.logger.warn({
-        domain: Domain.CustomEffect,
+        domain: Domain.AppEffect,
         message: "The custom effect backlog is full, ignoring effect",
         context: { effect },
       });
@@ -61,7 +61,7 @@ class CustomEffectHandler {
 
   private handleBacklog(handler: (effect: any) => void): void {
     this.logger.debug({
-      domain: Domain.CustomEffect,
+      domain: Domain.AppEffect,
       verbosity: Verbosity.Normal,
       message: "Handling backlog",
       context: {
@@ -82,18 +82,18 @@ class CustomEffectHandler {
       return handler(effect);
     } catch (e) {
       this.logger.error({
-        domain: Domain.CustomEffect,
-        message: "Error while handling custom effect",
+        domain: Domain.AppEffect,
+        message: "Error while handling app effect",
         context: { effect, exception: e },
       });
     }
   }
 }
 
-function defaultCustomEffectConfig(): Config {
+function defaultAppEffectConfig(): Config {
   return {
     useBacklog: true,
   };
 }
 
-export { CustomEffectHandler, Config, defaultCustomEffectConfig };
+export { AppEffectHandler, Config, defaultAppEffectConfig };

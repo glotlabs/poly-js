@@ -94,7 +94,7 @@ enum Domain {
   Time,
   LocalStorage,
   Navigation,
-  CustomEffect,
+  AppEffect,
 }
 
 enum DebugLogger {

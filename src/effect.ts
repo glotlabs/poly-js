@@ -1,11 +1,11 @@
 import { History } from "./browser/history";
 import { LocalStorage } from "./browser/local_storage";
-import { CustomEffectHandler } from "./effect/custom";
+import { AppEffectHandler } from "./effect/app";
 import { LocalStorageEffectHandler } from "./effect/local_storage";
 import { NavigationEffectHandler } from "./effect/navigation";
 import { JsonHelper } from "./json";
 import { Domain, Logger, Verbosity } from "./logger";
-import { Config as CustomEffectConfig } from "./effect/custom";
+import { Config as AppEffectConfig } from "./effect/app";
 import {
   DomEffect,
   Effect,
@@ -26,10 +26,10 @@ class EffectHandler {
   private readonly timeHandler: TimeEffectHandler;
   private readonly navigationHandler: NavigationEffectHandler;
   private readonly localStorageHandler: LocalStorageEffectHandler;
-  private readonly customHandler: CustomEffectHandler;
+  private readonly appEffectHandler: AppEffectHandler;
 
   constructor(
-    private readonly customEffectConfig: CustomEffectConfig,
+    private readonly appEffectConfig: AppEffectConfig,
     private readonly browser: Browser,
     private readonly window: Window,
     private readonly date: Date,
@@ -59,8 +59,8 @@ class EffectHandler {
       this.logger
     );
 
-    this.customHandler = new CustomEffectHandler(
-      this.customEffectConfig,
+    this.appEffectHandler = new AppEffectHandler(
+      this.appEffectConfig,
       this.logger
     );
   }
@@ -87,8 +87,8 @@ class EffectHandler {
       this.localStorageHandler.handle(effect);
     });
 
-    groupedEffects.customEffects.forEach((effect) => {
-      this.customHandler.handle(effect);
+    groupedEffects.appEffects.forEach((effect) => {
+      this.appEffectHandler.handle(effect);
     });
   }
 
@@ -114,8 +114,8 @@ class EffectHandler {
       case "time":
         return this.timeHandler.handle(effect.config as TimeEffect);
 
-      case "custom":
-        return this.customHandler.handle(effect.config);
+      case "app":
+        return this.appEffectHandler.handle(effect.config);
 
       default:
         this.logger.error({
@@ -128,8 +128,8 @@ class EffectHandler {
     throw new Error(`Unknown effect type: ${effect.type}`);
   }
 
-  public setCustomEffectHandler(handler: (effect: any) => void) {
-    this.customHandler.setHandler(handler);
+  public setAppEffectHandler(handler: (effect: any) => void) {
+    this.appEffectHandler.setHandler(handler);
   }
 
   private handleEffectfulMsg({ msg, effect }: EffectfulMsg): void {
@@ -141,7 +141,7 @@ interface GroupedEffects {
   effectfulMsgEffects: EffectfulMsg[];
   navigationEffects: NavigationEffect[];
   localStorageEffects: LocalStorageEffect[];
-  customEffects: any[];
+  appEffects: any[];
 }
 
 function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
@@ -149,7 +149,7 @@ function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
     effectfulMsgEffects: [],
     navigationEffects: [],
     localStorageEffects: [],
-    customEffects: [],
+    appEffects: [],
   };
 
   effects.forEach((effect) => {
@@ -170,8 +170,8 @@ function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
         );
         break;
 
-      case "custom":
-        groupedEffects.customEffects.push(effect.config);
+      case "app":
+        groupedEffects.appEffects.push(effect.config);
         break;
 
       case "none":
