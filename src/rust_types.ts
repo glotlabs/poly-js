@@ -36,7 +36,7 @@ interface NavigationEffect {
 
 interface DomEffect {
   type: string;
-  config: GetElementValue;
+  config: GetElementValue | GetRadioGroupValue;
 }
 
 interface TimeEffect {
@@ -46,6 +46,11 @@ interface TimeEffect {
 
 interface GetElementValue {
   elementId: string;
+  parseAsJson: boolean;
+}
+
+interface GetRadioGroupValue {
+  selector: string;
   parseAsJson: boolean;
 }
 
@@ -157,4 +162,5 @@ export {
   DomEffect,
   TimeEffect,
   GetElementValue,
+  GetRadioGroupValue,
 };

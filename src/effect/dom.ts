@@ -2,7 +2,7 @@ import { Browser } from "../browser";
 import { Window, WindowSize } from "../browser/window";
 import { JsonHelper } from "../json";
 import { Domain, Logger, Verbosity } from "../logger";
-import { DomEffect, GetElementValue } from "../rust_types";
+import { DomEffect, GetElementValue, GetRadioGroupValue } from "../rust_types";
 
 class DomEffectHandler {
   constructor(
@@ -19,6 +19,9 @@ class DomEffectHandler {
 
       case "getElementValue":
         return this.getElementValue(effect.config as GetElementValue);
+
+      case "getRadioGroupValue":
+        return this.getRadioGroupValue(effect.config as GetRadioGroupValue);
 
       default:
         this.logger.warn({
@@ -60,6 +63,48 @@ class DomEffectHandler {
       message: "Failed to get value from element",
       context: {
         elementId,
+      },
+    });
+
+    return null;
+  }
+
+  private getRadioGroupValue({
+    selector,
+    parseAsJson,
+  }: GetRadioGroupValue): any {
+    const nodeList = document.querySelectorAll<HTMLInputElement>(selector);
+    const checkedElems = Array.from(nodeList).filter((elem) => elem.checked);
+
+    if (checkedElems.length === 0) {
+      return null;
+    }
+
+    const stringValue = checkedElems[0].value;
+
+    if (isString(stringValue)) {
+      const value = parseAsJson
+        ? this.jsonHelper.parse(stringValue)
+        : stringValue;
+
+      this.logger.debug({
+        domain: Domain.Dom,
+        verbosity: Verbosity.Normal,
+        message: "Got value from radio group",
+        context: {
+          selector,
+          value,
+        },
+      });
+
+      return value;
+    }
+
+    this.logger.error({
+      domain: Domain.Dom,
+      message: "Failed to get value from radio group",
+      context: {
+        selector,
       },
     });
 
