@@ -123,7 +123,15 @@ function defaultDebugConfig(): Config {
   };
 }
 
-function fullDebugConfig(): Config {
+function verboseDebugConfig(): Config {
+  return {
+    debugDomains: [Domain.All],
+    debugLogger: DebugLogger.Log,
+    debugVerbosity: Verbosity.Verbose,
+  };
+}
+
+function traceDebugConfig(): Config {
   return {
     debugDomains: [Domain.All],
     debugLogger: DebugLogger.Trace,
@@ -140,5 +148,6 @@ export {
   Verbosity,
   defaultLoggerConfig,
   defaultDebugConfig,
-  fullDebugConfig,
+  verboseDebugConfig,
+  traceDebugConfig,
 };
