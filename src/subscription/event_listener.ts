@@ -29,7 +29,7 @@ class EventListenerManager {
   constructor(
     private readonly browser: Browser,
     private readonly logger: Logger,
-    private readonly onMsg: (msg: SubscriptionMsg) => void
+    private readonly onMsg: (msg: SubscriptionMsg, event: Event) => void
   ) {}
 
   public setEventListeners(newListeners: RustEventListener[]) {
@@ -120,7 +120,8 @@ class EventListenerManager {
         context: {
           id: listener.id,
           type: listener.eventType,
-          target: listener.listenTarget,
+          listenTarget: listener.listenTarget,
+          event,
           matchers: listener.matchers,
         },
       });
@@ -145,11 +146,12 @@ class EventListenerManager {
         type: listener.eventType,
         target: listener.listenTarget,
         matchers: listener.matchers,
+        event,
         msg: listener.msg,
       },
     });
 
-    this.onMsg(listener.msg);
+    this.onMsg(listener.msg, event);
   }
 
   private matchEvent(matcher: EventMatcher, event: Event): boolean {

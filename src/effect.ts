@@ -92,7 +92,7 @@ class EffectHandler {
     });
   }
 
-  public run(effect: Effect): any {
+  public run(effect: Effect, sourceEvent: Event | null): any {
     switch (effect.type) {
       case "none":
         throw new Error("Cannot run 'none' effect");
@@ -109,7 +109,7 @@ class EffectHandler {
         );
 
       case "dom":
-        return this.domHandler.handle(effect.config as DomEffect);
+        return this.domHandler.handle(effect.config as DomEffect, sourceEvent);
 
       case "time":
         return this.timeHandler.handle(effect.config as TimeEffect);

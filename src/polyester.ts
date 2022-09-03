@@ -142,7 +142,7 @@ class Polyester {
       return msg.msg;
     }
 
-    const effectResult = this.effectHandler.run(msg.effect);
+    const effectResult = this.effectHandler.run(msg.effect, msg.sourceEvent);
 
     if (!isObject(msg.msg)) {
       return msg.msg;

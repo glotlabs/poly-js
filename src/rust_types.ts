@@ -36,7 +36,7 @@ interface NavigationEffect {
 
 interface DomEffect {
   type: string;
-  config: GetElementValue | GetRadioGroupValue;
+  config: GetElementValue | GetRadioGroupValue | GetTargetDataValue;
 }
 
 interface TimeEffect {
@@ -54,6 +54,12 @@ interface GetRadioGroupValue {
   parseAsJson: boolean;
 }
 
+interface GetTargetDataValue {
+  name: string;
+  selector: string;
+  parseAsJson: boolean;
+}
+
 interface LocalStorageEffect {
   type: string;
   config: LocalStorageGetItem | LocalStorageSetItem;
@@ -62,6 +68,8 @@ interface LocalStorageEffect {
 interface EffectfulMsg {
   msg: any;
   effect: Effect;
+  // TODO: remove sourceEvent, the event is populated from js (not rust)
+  sourceEvent: Event | null;
 }
 
 interface Subscription {
@@ -163,4 +171,5 @@ export {
   TimeEffect,
   GetElementValue,
   GetRadioGroupValue,
+  GetTargetDataValue,
 };

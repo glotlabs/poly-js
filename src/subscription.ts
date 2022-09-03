@@ -23,13 +23,13 @@ class SubscriptionManager {
     this.eventListenerManager = new EventListenerManager(
       this.browser,
       this.logger,
-      (msg) => this.onSubscriptionMsg(msg)
+      (msg, event) => this.onSubscriptionMsg(msg, event)
     );
 
     this.intervalManager = new IntervalManager(
       this.browser,
       this.logger,
-      (msg) => this.onSubscriptionMsg(msg)
+      (msg) => this.onSubscriptionMsg(msg, null)
     );
   }
 
@@ -50,12 +50,12 @@ class SubscriptionManager {
     this.intervalManager.setIntervals(groupedSubscriptions.intervals);
   }
 
-  private onSubscriptionMsg(subMsg: SubscriptionMsg) {
-    const msg = this.prepareMsg(subMsg);
+  private onSubscriptionMsg(subMsg: SubscriptionMsg, event: Event | null) {
+    const msg = this.prepareMsg(subMsg, event);
     this.onMsg(msg);
   }
 
-  private prepareMsg(subMsg: SubscriptionMsg): Msg {
+  private prepareMsg(subMsg: SubscriptionMsg, event: Event | null): Msg {
     switch (subMsg.type) {
       case "pure":
         return {
@@ -63,7 +63,10 @@ class SubscriptionManager {
         };
 
       case "effectful":
-        return subMsg.config as EffectfulMsg;
+        return {
+          ...(subMsg.config as EffectfulMsg),
+          sourceEvent: event,
+        };
 
       default:
         this.logger.warn({

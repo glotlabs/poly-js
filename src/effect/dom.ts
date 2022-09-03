@@ -2,7 +2,12 @@ import { Browser } from "../browser";
 import { Window, WindowSize } from "../browser/window";
 import { JsonHelper } from "../json";
 import { Domain, Logger, Verbosity } from "../logger";
-import { DomEffect, GetElementValue, GetRadioGroupValue } from "../rust_types";
+import {
+  DomEffect,
+  GetTargetDataValue,
+  GetElementValue,
+  GetRadioGroupValue,
+} from "../rust_types";
 
 class DomEffectHandler {
   constructor(
@@ -12,7 +17,7 @@ class DomEffectHandler {
     private readonly logger: Logger
   ) {}
 
-  public handle(effect: DomEffect): any {
+  public handle(effect: DomEffect, sourceEvent: Event | null): any {
     switch (effect.type) {
       case "getWindowSize":
         return this.getWindowSize();
@@ -22,6 +27,12 @@ class DomEffectHandler {
 
       case "getRadioGroupValue":
         return this.getRadioGroupValue(effect.config as GetRadioGroupValue);
+
+      case "getTargetDataValue":
+        return this.getTargetDataValue(
+          effect.config as GetTargetDataValue,
+          sourceEvent
+        );
 
       default:
         this.logger.warn({
@@ -110,6 +121,63 @@ class DomEffectHandler {
 
     return null;
   }
+
+  private getTargetDataValue(
+    { name, parseAsJson }: GetTargetDataValue,
+    sourceEvent: Event | null
+  ): any {
+    const target = closestTargetFromEvent(sourceEvent, `[data-${name}]`);
+    if (!target) {
+      return null;
+    }
+
+    const stringValue = target.getAttribute(`data-${name}`);
+
+    if (stringValue != null && isString(stringValue)) {
+      const value = parseAsJson
+        ? this.jsonHelper.parse(stringValue)
+        : stringValue;
+
+      this.logger.debug({
+        domain: Domain.Dom,
+        verbosity: Verbosity.Normal,
+        message: "Got value from data attribute",
+        context: {
+          attribute: `data-${name}`,
+          value,
+        },
+      });
+
+      return value;
+    }
+
+    this.logger.error({
+      domain: Domain.Dom,
+      message: "Failed to get value from data attribute",
+      context: {
+        attribute: `data-${name}`,
+      },
+    });
+
+    return null;
+  }
+}
+
+function closestTargetFromEvent(
+  event: Event | null,
+  selector: string
+): HTMLElement | null {
+  const eventTarget = event?.target;
+  if (!eventTarget || !(eventTarget instanceof Element)) {
+    return null;
+  }
+
+  const target = eventTarget.closest(selector);
+  if (!target || !(target instanceof HTMLElement)) {
+    return null;
+  }
+
+  return target;
 }
 
 function isString(value: any): boolean {
