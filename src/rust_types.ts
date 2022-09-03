@@ -38,6 +38,7 @@ interface DomEffect {
   type: string;
   config:
     | FocusElement
+    | SelectInputText
     | GetElementValue
     | GetRadioGroupValue
     | GetTargetDataValue;
@@ -49,6 +50,10 @@ interface TimeEffect {
 }
 
 interface FocusElement {
+  elementId: string;
+}
+
+interface SelectInputText {
   elementId: string;
 }
 
@@ -181,4 +186,5 @@ export {
   GetRadioGroupValue,
   GetTargetDataValue,
   FocusElement,
+  SelectInputText,
 };

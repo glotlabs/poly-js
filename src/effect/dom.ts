@@ -8,6 +8,7 @@ import {
   GetElementValue,
   GetRadioGroupValue,
   FocusElement,
+  SelectInputText,
 } from "../rust_types";
 
 class DomEffectHandler {
@@ -22,6 +23,9 @@ class DomEffectHandler {
     switch (effect.type) {
       case "focusElement":
         return this.focusElement(effect.config as FocusElement);
+
+      case "selectInputText":
+        return this.selectInputText(effect.config as SelectInputText);
 
       case "getWindowSize":
         return this.getWindowSize();
@@ -49,6 +53,14 @@ class DomEffectHandler {
 
   private focusElement({ elementId }: FocusElement): void {
     this.browser.getElementById(elementId)?.focus();
+  }
+
+  private selectInputText({ elementId }: SelectInputText): void {
+    const elem = this.browser.getElementById(elementId);
+    if (elem instanceof HTMLInputElement) {
+      elem.focus();
+      elem.select();
+    }
   }
 
   private getWindowSize(): WindowSize {
