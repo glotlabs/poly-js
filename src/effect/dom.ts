@@ -7,6 +7,7 @@ import {
   GetTargetDataValue,
   GetElementValue,
   GetRadioGroupValue,
+  FocusElement,
 } from "../rust_types";
 
 class DomEffectHandler {
@@ -19,6 +20,9 @@ class DomEffectHandler {
 
   public handle(effect: DomEffect, sourceEvent: Event | null): any {
     switch (effect.type) {
+      case "focusElement":
+        return this.focusElement(effect.config as FocusElement);
+
       case "getWindowSize":
         return this.getWindowSize();
 
@@ -41,6 +45,10 @@ class DomEffectHandler {
           context: { type: effect.type },
         });
     }
+  }
+
+  private focusElement({ elementId }: FocusElement): void {
+    this.browser.getElementById(elementId)?.focus();
   }
 
   private getWindowSize(): WindowSize {

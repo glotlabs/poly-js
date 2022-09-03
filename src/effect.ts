@@ -79,6 +79,10 @@ class EffectHandler {
       this.handleEffectfulMsg(effect);
     });
 
+    groupedEffects.domEffects.forEach((effect) => {
+      this.domHandler.handle(effect, null);
+    });
+
     groupedEffects.navigationEffects.forEach((effect) => {
       this.navigationHandler.handle(effect);
     });
@@ -139,6 +143,7 @@ class EffectHandler {
 
 interface GroupedEffects {
   effectfulMsgEffects: EffectfulMsg[];
+  domEffects: DomEffect[];
   navigationEffects: NavigationEffect[];
   localStorageEffects: LocalStorageEffect[];
   appEffects: any[];
@@ -147,6 +152,7 @@ interface GroupedEffects {
 function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
   const groupedEffects: GroupedEffects = {
     effectfulMsgEffects: [],
+    domEffects: [],
     navigationEffects: [],
     localStorageEffects: [],
     appEffects: [],
@@ -156,6 +162,10 @@ function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
     switch (effect.type) {
       case "effectfulMsg":
         groupedEffects.effectfulMsgEffects.push(effect.config as EffectfulMsg);
+        break;
+
+      case "dom":
+        groupedEffects.domEffects.push(effect.config as DomEffect);
         break;
 
       case "navigation":

@@ -36,12 +36,20 @@ interface NavigationEffect {
 
 interface DomEffect {
   type: string;
-  config: GetElementValue | GetRadioGroupValue | GetTargetDataValue;
+  config:
+    | FocusElement
+    | GetElementValue
+    | GetRadioGroupValue
+    | GetTargetDataValue;
 }
 
 interface TimeEffect {
   type: string;
   config: any;
+}
+
+interface FocusElement {
+  elementId: string;
 }
 
 interface GetElementValue {
@@ -172,4 +180,5 @@ export {
   GetElementValue,
   GetRadioGroupValue,
   GetTargetDataValue,
+  FocusElement,
 };
