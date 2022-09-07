@@ -10,6 +10,7 @@ import {
   KeyboardKeyMatcher,
   RustEventListener,
   SubscriptionMsg,
+  MouseButtonMatcher,
 } from "../rust_types";
 
 interface ActiveEventListener {
@@ -168,6 +169,12 @@ class EventListenerManager {
           event
         );
 
+      case "mouseButton":
+        return this.matchMouseButton(
+          matcher.config as MouseButtonMatcher,
+          event
+        );
+
       case "keyboardKey":
         return this.matchKeyboardKey(
           matcher.config as KeyboardKeyMatcher,
@@ -213,6 +220,15 @@ class EventListenerManager {
     }
 
     return elem.closest(matcher.selector) != null;
+  }
+
+  private matchMouseButton(matcher: MouseButtonMatcher, event: Event): boolean {
+    const e = event as MouseEvent;
+    if (!("button" in e)) {
+      return false;
+    }
+
+    return matcher.button == mouseButtonToString(e.button);
   }
 
   private matchKeyboardKey(matcher: KeyboardKeyMatcher, event: Event): boolean {
@@ -280,6 +296,23 @@ function prepareEventListenersDelta(
     listenersToKeep,
     listenersToAdd,
   };
+}
+
+function mouseButtonToString(n: number): string | null {
+  switch (n) {
+    case 0:
+      return "main";
+    case 1:
+      return "auxiliary";
+    case 2:
+      return "secondary";
+    case 3:
+      return "fourth";
+    case 4:
+      return "fifth";
+  }
+
+  return null;
 }
 
 export { EventListenerManager, ActiveEventListener };

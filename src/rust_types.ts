@@ -110,6 +110,7 @@ interface EventMatcher {
   config:
     | ExactSelectorMatcher
     | ClosestSelectorMatcher
+    | MouseButtonMatcher
     | KeyboardKeyMatcher
     | KeyboardComboMatcher;
 }
@@ -124,6 +125,10 @@ interface ClosestSelectorMatcher {
 
 interface KeyboardKeyMatcher {
   key: string;
+}
+
+interface MouseButtonMatcher {
+  button: string;
 }
 
 interface KeyboardComboMatcher {
@@ -170,6 +175,7 @@ export {
   EventMatcher,
   ExactSelectorMatcher,
   ClosestSelectorMatcher,
+  MouseButtonMatcher,
   KeyboardKeyMatcher,
   KeyboardComboMatcher,
   Effect,
