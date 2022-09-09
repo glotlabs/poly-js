@@ -9,6 +9,7 @@ import {
   GetRadioGroupValue,
   FocusElement,
   SelectInputText,
+  DispatchEvent,
 } from "../rust_types";
 
 class DomEffectHandler {
@@ -21,6 +22,9 @@ class DomEffectHandler {
 
   public handle(effect: DomEffect, sourceEvent: Event | null): any {
     switch (effect.type) {
+      case "dispatchEvent":
+        return this.dispatchEvent(effect.config as DispatchEvent);
+
       case "focusElement":
         return this.focusElement(effect.config as FocusElement);
 
@@ -49,6 +53,15 @@ class DomEffectHandler {
           context: { type: effect.type },
         });
     }
+  }
+
+  private dispatchEvent(config: DispatchEvent): void {
+    const event = new Event(config.eventType, {
+      bubbles: config.bubbles,
+      cancelable: config.cancelable,
+    });
+
+    this.browser.dispatchEvent(config.eventTarget, event);
   }
 
   private focusElement({ elementId }: FocusElement): void {

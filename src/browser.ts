@@ -1,3 +1,5 @@
+import { EventTarget, EventTargetElement } from "./rust_types";
+
 interface Browser {
   getElementById(id: string): HTMLElement | null;
   getActiveElement(): Element | null;
@@ -8,6 +10,7 @@ interface Browser {
     config: ListenConfig
   ): AbortFn;
   setInterval(handler: TimerHandler, timeout?: number): AbortFn;
+  dispatchEvent(eventTarget: EventTarget, event: Event): void;
 }
 
 class RealBrowser implements Browser {
@@ -49,6 +52,24 @@ class RealBrowser implements Browser {
         window.clearInterval(id);
       },
     };
+  }
+
+  public dispatchEvent(eventTarget: EventTarget, event: Event): void {
+    switch (eventTarget.type) {
+      case "window":
+        window.dispatchEvent(event);
+        break;
+
+      case "document":
+        document.dispatchEvent(event);
+        break;
+
+      case "element":
+        const config = eventTarget.config as EventTargetElement;
+        const element = document.getElementById(config.elementId);
+        element?.dispatchEvent(event);
+        break;
+    }
   }
 }
 

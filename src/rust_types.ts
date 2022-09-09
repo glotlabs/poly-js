@@ -37,6 +37,7 @@ interface NavigationEffect {
 interface DomEffect {
   type: string;
   config:
+    | DispatchEvent
     | FocusElement
     | SelectInputText
     | GetElementValue
@@ -47,6 +48,26 @@ interface DomEffect {
 interface TimeEffect {
   type: string;
   config: any;
+}
+
+interface DispatchEvent {
+  eventTarget: EventTarget;
+  eventType: string;
+  bubbles: boolean;
+  cancelable: boolean;
+}
+
+interface EventTarget {
+  type: string;
+  config: EventTargetWindow | EventTargetDocument | EventTargetElement;
+}
+
+interface EventTargetWindow {}
+
+interface EventTargetDocument {}
+
+interface EventTargetElement {
+  elementId: string;
 }
 
 interface FocusElement {
@@ -193,4 +214,9 @@ export {
   GetTargetDataValue,
   FocusElement,
   SelectInputText,
+  DispatchEvent,
+  EventTarget,
+  EventTargetWindow,
+  EventTargetDocument,
+  EventTargetElement,
 };
