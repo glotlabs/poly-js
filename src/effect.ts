@@ -7,6 +7,7 @@ import { JsonHelper } from "./json";
 import { Domain, Logger, Verbosity } from "./logger";
 import { Config as AppEffectConfig } from "./effect/app";
 import {
+  ConsoleEffect,
   DomEffect,
   Effect,
   EffectfulMsg,
@@ -20,9 +21,12 @@ import { Window } from "./browser/window";
 import { Browser } from "./browser";
 import { TimeEffectHandler } from "./effect/time";
 import { Date } from "./browser/date";
+import { ConsoleEffectHandler } from "./effect/console";
+import { ConsoleInterface } from "./browser/console";
 
 class EffectHandler {
   private readonly domHandler: DomEffectHandler;
+  private readonly consoleHandler: ConsoleEffectHandler;
   private readonly timeHandler: TimeEffectHandler;
   private readonly navigationHandler: NavigationEffectHandler;
   private readonly localStorageHandler: LocalStorageEffectHandler;
@@ -31,6 +35,7 @@ class EffectHandler {
   constructor(
     private readonly appEffectConfig: AppEffectConfig,
     private readonly browser: Browser,
+    private readonly console: ConsoleInterface,
     private readonly window: Window,
     private readonly date: Date,
     private readonly history: History,
@@ -45,6 +50,8 @@ class EffectHandler {
       this.jsonHelper,
       this.logger
     );
+
+    this.consoleHandler = new ConsoleEffectHandler(this.console, this.logger);
 
     this.timeHandler = new TimeEffectHandler(this.date, this.logger);
 
@@ -83,6 +90,10 @@ class EffectHandler {
       this.domHandler.handle(effect, null);
     });
 
+    groupedEffects.consoleEffects.forEach((effect) => {
+      this.consoleHandler.handle(effect);
+    });
+
     groupedEffects.navigationEffects.forEach((effect) => {
       this.navigationHandler.handle(effect);
     });
@@ -115,6 +126,9 @@ class EffectHandler {
       case "dom":
         return this.domHandler.handle(effect.config as DomEffect, sourceEvent);
 
+      case "console":
+        return this.consoleHandler.handle(effect.config as ConsoleEffect);
+
       case "time":
         return this.timeHandler.handle(effect.config as TimeEffect);
 
@@ -144,6 +158,7 @@ class EffectHandler {
 interface GroupedEffects {
   effectfulMsgEffects: EffectfulMsg[];
   domEffects: DomEffect[];
+  consoleEffects: ConsoleEffect[];
   navigationEffects: NavigationEffect[];
   localStorageEffects: LocalStorageEffect[];
   appEffects: any[];
@@ -153,6 +168,7 @@ function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
   const groupedEffects: GroupedEffects = {
     effectfulMsgEffects: [],
     domEffects: [],
+    consoleEffects: [],
     navigationEffects: [],
     localStorageEffects: [],
     appEffects: [],
@@ -166,6 +182,10 @@ function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
 
       case "dom":
         groupedEffects.domEffects.push(effect.config as DomEffect);
+        break;
+
+      case "console":
+        groupedEffects.consoleEffects.push(effect.config as ConsoleEffect);
         break;
 
       case "navigation":

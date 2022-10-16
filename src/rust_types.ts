@@ -24,6 +24,7 @@ interface Effect {
   config:
     | DomEffect
     | TimeEffect
+    | ConsoleEffect
     | NavigationEffect
     | LocalStorageEffect
     | EffectfulMsg;
@@ -43,6 +44,15 @@ interface DomEffect {
     | GetElementValue
     | GetRadioGroupValue
     | GetTargetDataValue;
+}
+
+interface ConsoleEffect {
+  type: string;
+  config: Log;
+}
+
+interface Log {
+  message: string;
 }
 
 interface TimeEffect {
@@ -219,4 +229,6 @@ export {
   EventTargetWindow,
   EventTargetDocument,
   EventTargetElement,
+  ConsoleEffect,
+  Log,
 };

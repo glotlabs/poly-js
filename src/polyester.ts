@@ -20,6 +20,7 @@ import {
   defaultAppEffectConfig,
 } from "./effect/app";
 import { BrowserDate, Date } from "./browser/date";
+import { BrowserConsole, ConsoleInterface } from "./browser/console";
 
 interface Config {
   loggerConfig?: LoggerConfig;
@@ -33,6 +34,7 @@ interface State {
 class Polyester {
   private readonly appElem: HTMLElement;
   private readonly browser: Browser;
+  private readonly console: ConsoleInterface;
   private readonly window: Window;
   private readonly date: Date;
   private readonly localStorage: LocalStorage;
@@ -48,6 +50,7 @@ class Polyester {
 
   constructor(private readonly page: Page, private readonly config?: Config) {
     this.browser = new RealBrowser();
+    this.console = new BrowserConsole();
 
     const appId = page.id();
     const appElem = this.browser.getElementById(appId);
@@ -67,20 +70,21 @@ class Polyester {
     this.subscriptionManager = new SubscriptionManager(
       this.browser,
       this.logger,
-      (msg) => {
+      (msg: any) => {
         this.update(msg);
       }
     );
     this.effectHandler = new EffectHandler(
       this.config?.appEffectConfig ?? defaultAppEffectConfig(),
       this.browser,
+      this.console,
       this.window,
       this.date,
       this.history,
       this.localStorage,
       this.jsonHelper,
       this.logger,
-      (msg) => {
+      (msg: Msg) => {
         this.update(msg);
       }
     );
@@ -92,7 +96,7 @@ class Polyester {
   }
 
   // TODO: Return proper types from RustEnum and replace any
-  public send(msg: any) {
+  public send(msg: Msg) {
     this.update({ msg });
   }
 

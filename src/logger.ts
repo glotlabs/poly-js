@@ -94,6 +94,7 @@ enum Domain {
   Time,
   LocalStorage,
   Navigation,
+  Console,
   AppEffect,
 }
 
