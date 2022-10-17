@@ -23,6 +23,7 @@ import { TimeEffectHandler } from "./effect/time";
 import { Date } from "./browser/date";
 import { ConsoleEffectHandler } from "./effect/console";
 import { ConsoleInterface } from "./browser/console";
+import { LocationInterface } from "./browser/location";
 
 class EffectHandler {
   private readonly domHandler: DomEffectHandler;
@@ -39,6 +40,7 @@ class EffectHandler {
     private readonly window: Window,
     private readonly date: Date,
     private readonly history: History,
+    private readonly location: LocationInterface,
     private readonly localStorage: LocalStorage,
     private readonly jsonHelper: JsonHelper,
     private readonly logger: Logger,
@@ -57,6 +59,7 @@ class EffectHandler {
 
     this.navigationHandler = new NavigationEffectHandler(
       this.history,
+      this.location,
       this.logger
     );
 

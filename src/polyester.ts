@@ -21,6 +21,7 @@ import {
 } from "./effect/app";
 import { BrowserDate, Date } from "./browser/date";
 import { BrowserConsole, ConsoleInterface } from "./browser/console";
+import { BrowserLocation, LocationInterface } from "./browser/location";
 
 interface Config {
   loggerConfig?: LoggerConfig;
@@ -41,6 +42,7 @@ class Polyester {
   private readonly logger: Logger;
   private readonly jsonHelper: JsonHelper;
   private readonly history: History;
+  private readonly location: LocationInterface;
   private readonly subscriptionManager: SubscriptionManager;
   private readonly effectHandler: EffectHandler;
 
@@ -67,6 +69,7 @@ class Polyester {
     );
     this.jsonHelper = new JsonHelper(this.logger);
     this.history = new BrowserHistory();
+    this.location = new BrowserLocation();
     this.subscriptionManager = new SubscriptionManager(
       this.browser,
       this.logger,
@@ -81,6 +84,7 @@ class Polyester {
       this.window,
       this.date,
       this.history,
+      this.location,
       this.localStorage,
       this.jsonHelper,
       this.logger,
