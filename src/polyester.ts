@@ -152,15 +152,17 @@ class Polyester {
       return msg.msg;
     }
 
-    const entries = Object.entries(msg.msg).map(([key, value]) => {
-      if (value === null || value === "") {
-        return [key, effectResult];
-      } else {
-        return [key, value];
-      }
+    const entries = Object.entries(msg.msg);
+
+    if (entries.length !== 1) {
+      return msg.msg;
+    }
+
+    const newEntries = entries.map(([key, _value]) => {
+      return [key, effectResult];
     });
 
-    return Object.fromEntries(entries);
+    return Object.fromEntries(newEntries);
   }
 
   private update(msg: Msg) {
