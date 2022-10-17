@@ -52,9 +52,24 @@ class LocalStorageEffectHandler {
     return jsonValue;
   }
 
-  private handleSetItem({ key, value }: LocalStorageSetItem): void {
+  private handleSetItem({ key, value }: LocalStorageSetItem): boolean {
     const jsonValue = this.jsonHelper.stringify(value);
-    this.localStorage.setItem(key, jsonValue);
+
+    try {
+      this.localStorage.setItem(key, jsonValue);
+    } catch (e) {
+      this.logger.warn({
+        domain: Domain.LocalStorage,
+        message: "Failed to save value to localStorage",
+        context: {
+          key,
+          value: jsonValue,
+          exception: e,
+        },
+      });
+
+      return false;
+    }
 
     this.logger.debug({
       domain: Domain.LocalStorage,
@@ -65,6 +80,8 @@ class LocalStorageEffectHandler {
         value: value,
       },
     });
+
+    return true;
   }
 }
 
