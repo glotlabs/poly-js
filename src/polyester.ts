@@ -158,12 +158,11 @@ class Polyester {
 
     const entries = Object.entries(msg.msg);
 
-    if (entries.length !== 1) {
-      return msg.msg;
-    }
-
-    const newEntries = entries.map(([key, _value]) => {
-      return [key, effectResult];
+    const newEntries = entries.map(([key, value]) => {
+      if (value === "$CAPTURE_VALUE") {
+        return [key, effectResult];
+      }
+      return [key, value];
     });
 
     return Object.fromEntries(newEntries);
