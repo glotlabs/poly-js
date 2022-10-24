@@ -22,6 +22,8 @@ import {
 import { BrowserDate, Date } from "./browser/date";
 import { BrowserConsole, ConsoleInterface } from "./browser/console";
 import { BrowserLocation, LocationInterface } from "./browser/location";
+import { replacePlaceholder } from "./msg";
+import { isObject } from "./util";
 
 interface Config {
   loggerConfig?: LoggerConfig;
@@ -150,22 +152,13 @@ class Polyester {
       return msg.msg;
     }
 
-    const effectResult = this.effectHandler.run(msg.effect, msg.sourceEvent);
+    const effectValue = this.effectHandler.run(msg.effect, msg.sourceEvent);
 
     if (!isObject(msg.msg)) {
       return msg.msg;
     }
 
-    const entries = Object.entries(msg.msg);
-
-    const newEntries = entries.map(([key, value]) => {
-      if (value === "$CAPTURE_VALUE") {
-        return [key, effectResult];
-      }
-      return [key, value];
-    });
-
-    return Object.fromEntries(newEntries);
+    return replacePlaceholder(msg.msg, effectValue);
   }
 
   private update(msg: Msg) {
@@ -200,10 +193,6 @@ class Polyester {
     this.subscriptionManager.handle(newSubscriptions);
     this.effectHandler.handle(effects);
   }
-}
-
-function isObject(obj: any) {
-  return obj === Object(obj);
 }
 
 export { Polyester, Config };
