@@ -10,6 +10,8 @@ import {
   FocusElement,
   SelectInputText,
   DispatchEvent,
+  GetFiles,
+  FileInfo,
 } from "../rust_types";
 
 class DomEffectHandler {
@@ -39,6 +41,9 @@ class DomEffectHandler {
 
       case "getRadioGroupValue":
         return this.getRadioGroupValue(effect.config as GetRadioGroupValue);
+
+      case "getFiles":
+        return this.getFiles(effect.config as GetFiles);
 
       case "getTargetDataValue":
         return this.getTargetDataValue(
@@ -153,6 +158,34 @@ class DomEffectHandler {
     });
 
     return null;
+  }
+
+  private getFiles({ elementId }: GetFiles): FileInfo[] {
+    const elem = this.browser.getElementById(elementId) as HTMLInputElement;
+    if (!elem.files) {
+      return [];
+    }
+
+    const files = Array.from(elem.files).map((file) => {
+      return {
+        name: file.name,
+        mime: file.type,
+        size: file.size,
+        lastModified: file.lastModified,
+      };
+    });
+
+    this.logger.debug({
+      domain: Domain.Dom,
+      verbosity: Verbosity.Normal,
+      message: "Got files from element",
+      context: {
+        elementId,
+        files,
+      },
+    });
+
+    return files;
   }
 
   private getTargetDataValue(

@@ -98,6 +98,10 @@ interface GetRadioGroupValue {
   parseAsJson: boolean;
 }
 
+interface GetFiles {
+  elementId: string;
+}
+
 interface GetTargetDataValue {
   name: string;
   selector: string;
@@ -194,6 +198,13 @@ interface LocalStorageSetItem {
   value: any;
 }
 
+interface FileInfo {
+  name: string;
+  mime: string;
+  size: number;
+  lastModified: number;
+}
+
 export {
   Page,
   Model,
@@ -221,6 +232,8 @@ export {
   TimeEffect,
   GetElementValue,
   GetRadioGroupValue,
+  GetFiles,
+  FileInfo,
   GetTargetDataValue,
   FocusElement,
   SelectInputText,
