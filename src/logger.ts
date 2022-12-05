@@ -4,7 +4,7 @@ interface Logger {
   debug(entry: DebugEntry): void;
 }
 
-const PREFIX = "Polyester";
+const PREFIX = "Poly";
 
 interface Config {
   debugDomains: Domain[];
@@ -79,7 +79,7 @@ class BrowserLogger implements Logger {
 
   private hasGlobalOverride(): boolean {
     // @ts-ignore
-    return window && "polyesterDebug" in window && window.polyesterDebug;
+    return window && "polyDebug" in window && window.polyDebug;
   }
 }
 

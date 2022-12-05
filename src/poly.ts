@@ -34,7 +34,7 @@ interface State {
   model: Model;
 }
 
-class Polyester {
+class Poly {
   private readonly appElem: HTMLElement;
   private readonly browser: Browser;
   private readonly console: ConsoleInterface;
@@ -195,4 +195,4 @@ class Polyester {
   }
 }
 
-export { Polyester, Config };
+export { Poly, Config };

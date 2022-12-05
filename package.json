@@ -1,13 +1,14 @@
 {
-  "name": "polyester",
+  "name": "poly",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
+    "build": "tsc --noEmit --project .",
     "bundle": "npm run bundle-dev && npm run bundle-prod",
-    "bundle-dev": "esbuild src/polyester.ts --bundle --format=esm --target=es2020 --outfile=dist/polyester-dev.js",
-    "bundle-prod": "esbuild src/polyester.ts --bundle --minify --format=esm --target=es2020 --outfile=dist/polyester-prod.js"
+    "bundle-dev": "esbuild src/poly.ts --bundle --format=esm --target=es2020 --outfile=dist/poly-dev.js",
+    "bundle-prod": "esbuild src/poly.ts --bundle --minify --format=esm --target=es2020 --outfile=dist/poly-prod.js"
   },
   "author": "Petter Rasmussen",
   "license": "MIT",
