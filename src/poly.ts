@@ -111,22 +111,8 @@ class Poly {
   }
 
   private updateDom(markup: string) {
-    const focusedElement = this.browser.getActiveElement();
-
     morphdom(this.appElem, markup, {
       onBeforeElUpdated(fromElem, toElem) {
-        // Skip update of focused input element, this prevents resetting the input value while the user is typing.
-        const inputIsFocused =
-          fromElem.nodeName === "INPUT" &&
-          toElem.nodeName === "INPUT" &&
-          fromElem.isSameNode(focusedElement) &&
-          (fromElem as HTMLInputElement).value !==
-            (toElem as HTMLInputElement).value;
-
-        if (inputIsFocused) {
-          return false;
-        }
-
         // Skip elements which has the unmanaged attribute
         const isUnmanaged = fromElem.hasAttribute("unmanaged");
         if (isUnmanaged) {
