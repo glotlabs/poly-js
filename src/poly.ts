@@ -102,7 +102,7 @@ class Poly {
   }
 
   // TODO: Return proper types from RustEnum and replace any
-  public send(msg: Msg) {
+  public send(msg: any) {
     this.update({ msg });
   }
 
