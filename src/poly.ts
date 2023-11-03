@@ -9,7 +9,7 @@ import {
   Domain,
   Verbosity,
 } from "./logger";
-import { Effect, Model, Msg, Page } from "./rust_types";
+import { Effect, Model, Msg, Page, JsMsg } from "./rust_types";
 import { EffectHandler } from "./effect";
 import { JsonHelper } from "./json";
 import { BrowserLocalStorage, LocalStorage } from "./browser/local_storage";
@@ -101,8 +101,8 @@ class Poly {
     this.handleModelAndEffects(model, effects);
   }
 
-  public sendMessage(msg: any) {
-    this.updateFromJs({ msg });
+  public sendMessage(type: string, data: any) {
+    this.updateFromJs({ type, data });
   }
 
   public onAppEffect(handler: (effect: any) => void) {
@@ -162,7 +162,7 @@ class Poly {
     this.handleModelAndEffects(model, effects);
   }
 
-  private updateFromJs(msg: any) {
+  private updateFromJs(msg: JsMsg) {
     this.logger.debug({
       domain: Domain.Core,
       verbosity: Verbosity.Normal,

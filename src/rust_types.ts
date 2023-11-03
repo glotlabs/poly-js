@@ -15,9 +15,14 @@ interface Page {
   id(): string;
   init(): Model;
   update(msg: Msg, model: Model): Model;
-  updateFromJs(msg: any, model: Model): Model;
+  updateFromJs(msg: JsMsg, model: Model): Model;
   getSubscriptions(model: Model): Subscription[];
   viewBody(model: Model): string;
+}
+
+interface JsMsg {
+  type: string;
+  data: any;
 }
 
 interface Effect {
@@ -245,4 +250,5 @@ export {
   EventTargetElement,
   ConsoleEffect,
   Log,
+  JsMsg,
 };
