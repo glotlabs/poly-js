@@ -15,6 +15,7 @@ interface Page {
   id(): string;
   init(): Model;
   update(msg: Msg, model: Model): Model;
+  updateFromJs(msg: any, model: Model): Model;
   getSubscriptions(model: Model): Subscription[];
   viewBody(model: Model): string;
 }

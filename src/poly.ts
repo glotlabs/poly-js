@@ -101,9 +101,8 @@ class Poly {
     this.handleModelAndEffects(model, effects);
   }
 
-  // TODO: Return proper types from RustEnum and replace any
-  public send(msg: any) {
-    this.update({ msg });
+  public sendMessage(msg: any) {
+    this.updateFromJs({ msg });
   }
 
   public onAppEffect(handler: (effect: any) => void) {
@@ -160,6 +159,20 @@ class Poly {
     });
 
     const { model, effects } = this.page.update(realMsg, this.state.model);
+    this.handleModelAndEffects(model, effects);
+  }
+
+  private updateFromJs(msg: any) {
+    this.logger.debug({
+      domain: Domain.Core,
+      verbosity: Verbosity.Normal,
+      message: "Sending js msg to rust",
+      context: {
+        msg,
+      },
+    });
+
+    const { model, effects } = this.page.updateFromJs(msg, this.state.model);
     this.handleModelAndEffects(model, effects);
   }
 
