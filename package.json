@@ -13,10 +13,10 @@
   "author": "Petter Rasmussen",
   "license": "MIT",
   "dependencies": {
-    "morphdom": "^2.6.1",
-    "typescript": "^5.5.3"
+    "morphdom": "^2.6.1"
   },
   "devDependencies": {
-    "esbuild": "^0.14.49"
+    "esbuild": "^0.14.49",
+    "typescript": "^5.5.3"
   }
 }
