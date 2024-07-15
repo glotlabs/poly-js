@@ -7,6 +7,7 @@ import { JsonHelper } from "./json";
 import { Domain, Logger, Verbosity } from "./logger";
 import { Config as AppEffectConfig } from "./effect/app";
 import {
+  ClipboardEffect,
   ConsoleEffect,
   DomEffect,
   Effect,
@@ -22,12 +23,15 @@ import { Browser } from "./browser";
 import { TimeEffectHandler } from "./effect/time";
 import { Date } from "./browser/date";
 import { ConsoleEffectHandler } from "./effect/console";
+import { ClipboardEffectHandler } from "./effect/clipboard";
 import { ConsoleInterface } from "./browser/console";
 import { LocationInterface } from "./browser/location";
+import { ClipboardInterface } from "./browser/clipboard";
 
 class EffectHandler {
   private readonly domHandler: DomEffectHandler;
   private readonly consoleHandler: ConsoleEffectHandler;
+  private readonly clipboardHandler: ClipboardEffectHandler;
   private readonly timeHandler: TimeEffectHandler;
   private readonly navigationHandler: NavigationEffectHandler;
   private readonly localStorageHandler: LocalStorageEffectHandler;
@@ -37,6 +41,7 @@ class EffectHandler {
     private readonly appEffectConfig: AppEffectConfig,
     private readonly browser: Browser,
     private readonly console: ConsoleInterface,
+    private readonly clipboard: ClipboardInterface,
     private readonly window: Window,
     private readonly date: Date,
     private readonly history: History,
@@ -54,6 +59,8 @@ class EffectHandler {
     );
 
     this.consoleHandler = new ConsoleEffectHandler(this.console, this.logger);
+
+    this.clipboardHandler = new ClipboardEffectHandler(this.clipboard, this.logger);
 
     this.timeHandler = new TimeEffectHandler(this.date, this.logger);
 
@@ -131,6 +138,9 @@ class EffectHandler {
 
       case "console":
         return this.consoleHandler.handle(effect.config as ConsoleEffect);
+
+      case "clipboard":
+        return this.clipboardHandler.handle(effect.config as ClipboardEffect);
 
       case "time":
         return this.timeHandler.handle(effect.config as TimeEffect);

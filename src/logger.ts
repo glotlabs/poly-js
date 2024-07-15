@@ -26,7 +26,7 @@ interface DebugEntry {
 }
 
 class BrowserLogger implements Logger {
-  constructor(private readonly config: Config) {}
+  constructor(private readonly config: Config) { }
 
   public warn({ domain, message, context }: LogEntry): void {
     console.warn(`[${PREFIX}:${Domain[domain]}]`, message, context);
@@ -95,6 +95,7 @@ enum Domain {
   LocalStorage,
   Navigation,
   Console,
+  Clipboard,
   AppEffect,
 }
 

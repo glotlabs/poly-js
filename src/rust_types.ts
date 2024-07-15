@@ -28,12 +28,12 @@ interface JsMsg {
 interface Effect {
   type: string;
   config:
-    | DomEffect
-    | TimeEffect
-    | ConsoleEffect
-    | NavigationEffect
-    | LocalStorageEffect
-    | EffectfulMsg;
+  | DomEffect
+  | TimeEffect
+  | ConsoleEffect
+  | NavigationEffect
+  | LocalStorageEffect
+  | EffectfulMsg;
 }
 
 interface NavigationEffect {
@@ -44,12 +44,12 @@ interface NavigationEffect {
 interface DomEffect {
   type: string;
   config:
-    | DispatchEvent
-    | FocusElement
-    | SelectInputText
-    | GetElementValue
-    | GetRadioGroupValue
-    | GetTargetDataValue;
+  | DispatchEvent
+  | FocusElement
+  | SelectInputText
+  | GetElementValue
+  | GetRadioGroupValue
+  | GetTargetDataValue;
 }
 
 interface ConsoleEffect {
@@ -59,6 +59,15 @@ interface ConsoleEffect {
 
 interface Log {
   message: string;
+}
+
+interface ClipboardEffect {
+  type: string;
+  config: WriteText;
+}
+
+interface WriteText {
+  text: string;
 }
 
 interface TimeEffect {
@@ -78,9 +87,9 @@ interface EventTarget {
   config: EventTargetWindow | EventTargetDocument | EventTargetElement;
 }
 
-interface EventTargetWindow {}
+interface EventTargetWindow { }
 
-interface EventTargetDocument {}
+interface EventTargetDocument { }
 
 interface EventTargetElement {
   elementId: string;
@@ -149,11 +158,11 @@ interface RustEventListener {
 interface EventMatcher {
   type: string;
   config:
-    | ExactSelectorMatcher
-    | ClosestSelectorMatcher
-    | MouseButtonMatcher
-    | KeyboardKeyMatcher
-    | KeyboardComboMatcher;
+  | ExactSelectorMatcher
+  | ClosestSelectorMatcher
+  | MouseButtonMatcher
+  | KeyboardKeyMatcher
+  | KeyboardComboMatcher;
 }
 
 interface ExactSelectorMatcher {
@@ -250,5 +259,7 @@ export {
   EventTargetElement,
   ConsoleEffect,
   Log,
+  ClipboardEffect,
+  WriteText,
   JsMsg,
 };

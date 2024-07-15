@@ -13,7 +13,8 @@
   "author": "Petter Rasmussen",
   "license": "MIT",
   "dependencies": {
-    "morphdom": "^2.6.1"
+    "morphdom": "^2.6.1",
+    "typescript": "^5.5.3"
   },
   "devDependencies": {
     "esbuild": "^0.14.49"

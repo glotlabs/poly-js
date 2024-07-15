@@ -24,6 +24,7 @@ import { BrowserConsole, ConsoleInterface } from "./browser/console";
 import { BrowserLocation, LocationInterface } from "./browser/location";
 import { replacePlaceholder } from "./msg";
 import { isObject } from "./util";
+import { BrowserClipboard, ClipboardInterface } from "./browser/clipboard";
 
 interface Config {
   loggerConfig?: LoggerConfig;
@@ -38,6 +39,7 @@ class Poly {
   private readonly appElem: HTMLElement;
   private readonly browser: Browser;
   private readonly console: ConsoleInterface;
+  private readonly clipboard: ClipboardInterface;
   private readonly window: Window;
   private readonly date: Date;
   private readonly localStorage: LocalStorage;
@@ -55,6 +57,7 @@ class Poly {
   constructor(private readonly page: Page, private readonly config?: Config) {
     this.browser = new RealBrowser();
     this.console = new BrowserConsole();
+    this.clipboard = new BrowserClipboard();
 
     const appId = page.id();
     const appElem = this.browser.getElementById(appId);
@@ -83,6 +86,7 @@ class Poly {
       this.config?.appEffectConfig ?? defaultAppEffectConfig(),
       this.browser,
       this.console,
+      this.clipboard,
       this.window,
       this.date,
       this.history,
