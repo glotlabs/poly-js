@@ -104,6 +104,10 @@ class EffectHandler {
       this.consoleHandler.handle(effect);
     });
 
+    groupedEffects.clipboardEffects.forEach((effect) => {
+      this.clipboardHandler.handle(effect);
+    });
+
     groupedEffects.navigationEffects.forEach((effect) => {
       this.navigationHandler.handle(effect);
     });
@@ -172,6 +176,7 @@ interface GroupedEffects {
   effectfulMsgEffects: EffectfulMsg[];
   domEffects: DomEffect[];
   consoleEffects: ConsoleEffect[];
+  clipboardEffects: ClipboardEffect[];
   navigationEffects: NavigationEffect[];
   localStorageEffects: LocalStorageEffect[];
   appEffects: any[];
@@ -182,6 +187,7 @@ function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
     effectfulMsgEffects: [],
     domEffects: [],
     consoleEffects: [],
+    clipboardEffects: [],
     navigationEffects: [],
     localStorageEffects: [],
     appEffects: [],
@@ -199,6 +205,10 @@ function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
 
       case "console":
         groupedEffects.consoleEffects.push(effect.config as ConsoleEffect);
+        break;
+
+      case "clipboard":
+        groupedEffects.clipboardEffects.push(effect.config as ClipboardEffect);
         break;
 
       case "navigation":
