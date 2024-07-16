@@ -27,11 +27,14 @@ class ClipboardEffectHandler {
   private writeText(config: WriteText): JsMsg {
     try {
       this.console.writeText(config.text);
-      return {
-        type: config.successMsgName,
-        data: null,
-      };
 
+      return {
+        type: config.resultMsgName,
+        data: {
+          success: true,
+          data: null,
+        },
+      };
     } catch (e: any) {
       this.logger.error({
         domain: Domain.Clipboard,
@@ -40,8 +43,11 @@ class ClipboardEffectHandler {
       });
 
       return {
-        type: config.failureMsgName,
-        data: e.message,
+        type: config.resultMsgName,
+        data: {
+          success: false,
+          message: e.message,
+        }
       };
     }
   }
