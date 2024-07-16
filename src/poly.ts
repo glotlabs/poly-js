@@ -96,7 +96,10 @@ class Poly {
       this.logger,
       (msg: Msg) => {
         this.update(msg);
-      }
+      },
+      (msg: JsMsg) => {
+        this.updateFromJs(msg)
+      },
     );
   }
 

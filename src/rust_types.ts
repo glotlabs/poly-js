@@ -68,6 +68,8 @@ interface ClipboardEffect {
 
 interface WriteText {
   text: string;
+  successMsgName: string;
+  failureMsgName: string;
 }
 
 interface TimeEffect {
