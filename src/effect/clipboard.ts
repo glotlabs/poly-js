@@ -8,10 +8,11 @@ class ClipboardEffectHandler {
     private readonly logger: Logger
   ) { }
 
-  public handle(effect: ClipboardEffect): WriteTextResult | null {
+  public handle(effect: ClipboardEffect): Promise<WriteTextResult | void> {
     switch (effect.type) {
       case "writeText":
-        return this.writeText(effect.config as WriteText);
+        const result = this.writeText(effect.config as WriteText);
+        return Promise.resolve(result);
 
       default:
         this.logger.warn({
@@ -20,7 +21,7 @@ class ClipboardEffectHandler {
           context: { type: effect.type },
         });
 
-        return null;
+        return Promise.resolve();
     }
   }
 

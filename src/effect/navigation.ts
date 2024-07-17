@@ -8,9 +8,9 @@ class NavigationEffectHandler {
     private readonly history: History,
     private readonly location: LocationInterface,
     private readonly logger: Logger
-  ) {}
+  ) { }
 
-  public handle(effect: NavigationEffect): void {
+  public handle(effect: NavigationEffect): Promise<void> {
     switch (effect.type) {
       case "pushUrl":
         this.pushUrl(effect.config);
@@ -31,6 +31,8 @@ class NavigationEffectHandler {
           context: { type: effect.type },
         });
     }
+
+    return Promise.resolve();
   }
 
   private pushUrl(url: string): void {

@@ -96,6 +96,7 @@ enum Domain {
   Navigation,
   Console,
   Clipboard,
+  Browser,
   AppEffect,
 }
 

@@ -7,6 +7,7 @@ import { JsonHelper } from "./json";
 import { Domain, Logger, Verbosity } from "./logger";
 import { Config as AppEffectConfig } from "./effect/app";
 import {
+  BrowserEffect,
   ClipboardEffect,
   ConsoleEffect,
   DomEffect,
@@ -28,11 +29,13 @@ import { ClipboardEffectHandler } from "./effect/clipboard";
 import { ConsoleInterface } from "./browser/console";
 import { LocationInterface } from "./browser/location";
 import { ClipboardInterface } from "./browser/clipboard";
+import { BrowserEffectHandler } from "./effect/browser";
 
 class EffectHandler {
   private readonly domHandler: DomEffectHandler;
   private readonly consoleHandler: ConsoleEffectHandler;
   private readonly clipboardHandler: ClipboardEffectHandler;
+  private readonly browserHandler: BrowserEffectHandler;
   private readonly timeHandler: TimeEffectHandler;
   private readonly navigationHandler: NavigationEffectHandler;
   private readonly localStorageHandler: LocalStorageEffectHandler;
@@ -62,6 +65,8 @@ class EffectHandler {
     this.consoleHandler = new ConsoleEffectHandler(this.console, this.logger);
 
     this.clipboardHandler = new ClipboardEffectHandler(this.clipboard, this.logger);
+
+    this.browserHandler = new BrowserEffectHandler(this.browser, this.logger);
 
     this.timeHandler = new TimeEffectHandler(this.date, this.logger);
 
@@ -122,7 +127,7 @@ class EffectHandler {
     });
   }
 
-  public run(effect: Effect, sourceEvent: Event | null): any {
+  public run(effect: Effect, sourceEvent: Event | null): Promise<any> {
     switch (effect.type) {
       case "none":
         throw new Error("Cannot run 'none' effect");
@@ -146,6 +151,9 @@ class EffectHandler {
 
       case "clipboard":
         return this.clipboardHandler.handle(effect.config as ClipboardEffect);
+
+      case "browser":
+        return this.browserHandler.handle(effect.config as BrowserEffect);
 
       case "time":
         return this.timeHandler.handle(effect.config as TimeEffect);

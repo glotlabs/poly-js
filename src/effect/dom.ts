@@ -20,36 +20,44 @@ class DomEffectHandler {
     private readonly window: Window,
     private readonly jsonHelper: JsonHelper,
     private readonly logger: Logger
-  ) {}
+  ) { }
 
-  public handle(effect: DomEffect, sourceEvent: Event | null): any {
+  public handle(effect: DomEffect, sourceEvent: Event | null): Promise<any> {
     switch (effect.type) {
       case "dispatchEvent":
-        return this.dispatchEvent(effect.config as DispatchEvent);
+        const dispatchResult = this.dispatchEvent(effect.config as DispatchEvent);
+        return Promise.resolve(dispatchResult);
 
       case "focusElement":
-        return this.focusElement(effect.config as FocusElement);
+        const focusResult = this.focusElement(effect.config as FocusElement);
+        return Promise.resolve(focusResult);
 
       case "selectInputText":
-        return this.selectInputText(effect.config as SelectInputText);
+        const selectInputTextResult = this.selectInputText(effect.config as SelectInputText);
+        return Promise.resolve(selectInputTextResult);
 
       case "getWindowSize":
-        return this.getWindowSize();
+        const getWindowSizeResult = this.getWindowSize();
+        return Promise.resolve(getWindowSizeResult);
 
       case "getElementValue":
-        return this.getElementValue(effect.config as GetElementValue);
+        const getElementValueResult = this.getElementValue(effect.config as GetElementValue);
+        return Promise.resolve(getElementValueResult);
 
       case "getRadioGroupValue":
-        return this.getRadioGroupValue(effect.config as GetRadioGroupValue);
+        const getRadioGroupValueResult = this.getRadioGroupValue(effect.config as GetRadioGroupValue);
+        return Promise.resolve(getRadioGroupValueResult);
 
       case "getFiles":
-        return this.getFiles(effect.config as GetFiles);
+        const getFilesResult = this.getFiles(effect.config as GetFiles);
+        return Promise.resolve(getFilesResult);
 
       case "getTargetDataValue":
-        return this.getTargetDataValue(
+        const getTargetDataValueResult = this.getTargetDataValue(
           effect.config as GetTargetDataValue,
           sourceEvent
         );
+        return Promise.resolve(getTargetDataValueResult);
 
       default:
         this.logger.warn({
@@ -58,6 +66,8 @@ class DomEffectHandler {
           context: { type: effect.type },
         });
     }
+
+    return Promise.resolve();
   }
 
   private dispatchEvent(config: DispatchEvent): void {

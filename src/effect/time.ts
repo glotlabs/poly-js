@@ -4,12 +4,13 @@ import { TimeEffect } from "../rust_types";
 import { Posix, posixFromMilliseconds } from "../time";
 
 class TimeEffectHandler {
-  constructor(private readonly date: Date, private readonly logger: Logger) {}
+  constructor(private readonly date: Date, private readonly logger: Logger) { }
 
-  public handle(effect: TimeEffect): any {
+  public handle(effect: TimeEffect): Promise<Posix | void> {
     switch (effect.type) {
       case "currentTime":
-        return this.currentTime();
+        const result = this.currentTime();
+        return Promise.resolve(result);
 
       default:
         this.logger.warn({
@@ -18,6 +19,8 @@ class TimeEffectHandler {
           context: { type: effect.type },
         });
     }
+
+    return Promise.resolve();
   }
 
   private currentTime(): Posix {

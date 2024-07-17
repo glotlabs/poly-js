@@ -12,15 +12,17 @@ class LocalStorageEffectHandler {
     private readonly localStorage: LocalStorage,
     private readonly jsonHelper: JsonHelper,
     private readonly logger: Logger
-  ) {}
+  ) { }
 
-  public handle(effect: LocalStorageEffect): any {
+  public handle(effect: LocalStorageEffect): Promise<any> {
     switch (effect.type) {
       case "getItem":
-        return this.handleGetItem(effect.config as LocalStorageGetItem);
+        const getItemResult = this.handleGetItem(effect.config as LocalStorageGetItem);
+        return Promise.resolve(getItemResult);
 
       case "setItem":
-        return this.handleSetItem(effect.config as LocalStorageSetItem);
+        const setItemResult = this.handleSetItem(effect.config as LocalStorageSetItem);
+        return Promise.resolve(setItemResult);
 
       default:
         this.logger.warn({
@@ -29,6 +31,8 @@ class LocalStorageEffectHandler {
           context: { type: effect.type },
         });
     }
+
+    return Promise.resolve();
   }
 
   private handleGetItem({ key }: LocalStorageGetItem): any {

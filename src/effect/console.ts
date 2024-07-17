@@ -6,12 +6,12 @@ class ConsoleEffectHandler {
   constructor(
     private readonly console: ConsoleInterface,
     private readonly logger: Logger
-  ) {}
+  ) { }
 
-  public handle(effect: ConsoleEffect): any {
+  public handle(effect: ConsoleEffect): Promise<void> {
     switch (effect.type) {
       case "log":
-        return this.log(effect.config as Log);
+        this.log(effect.config as Log);
 
       default:
         this.logger.warn({
@@ -20,6 +20,8 @@ class ConsoleEffectHandler {
           context: { type: effect.type },
         });
     }
+
+    return Promise.resolve();
   }
 
   private log(config: Log): void {

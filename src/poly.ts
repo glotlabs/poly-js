@@ -78,7 +78,7 @@ class Poly {
     this.subscriptionManager = new SubscriptionManager(
       this.browser,
       this.logger,
-      (msg: any) => {
+      (msg: Msg) => {
         this.update(msg);
       }
     );
@@ -136,12 +136,12 @@ class Poly {
     });
   }
 
-  private prepareMsg(msg: Msg): any {
+  private async prepareMsg(msg: Msg): Promise<any> {
     if (!("effect" in msg)) {
       return msg.msg;
     }
 
-    const effectValue = this.effectHandler.run(msg.effect, msg.sourceEvent);
+    const effectValue = await this.effectHandler.run(msg.effect, msg.sourceEvent);
 
     if (!isObject(msg.msg)) {
       return msg.msg;
@@ -150,8 +150,8 @@ class Poly {
     return replacePlaceholder(msg.msg, effectValue);
   }
 
-  private update(msg: Msg) {
-    const realMsg = this.prepareMsg(msg);
+  private async update(msg: Msg) {
+    const realMsg = await this.prepareMsg(msg);
 
     this.logger.debug({
       domain: Domain.Core,

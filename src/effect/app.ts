@@ -18,16 +18,19 @@ class AppEffectHandler {
   constructor(
     private readonly config: Config,
     private readonly logger: Logger
-  ) {}
+  ) { }
 
-  public handle(effect: any): any {
+  public handle(effect: any): Promise<any> {
     if (this.state.handler) {
-      return this.safeHandle(this.state.handler, effect);
+      const result = this.safeHandle(this.state.handler, effect);
+      return Promise.resolve(result);
     } else {
       if (this.config.useBacklog) {
         this.addToBacklog(effect);
       }
     }
+
+    return Promise.resolve();
   }
 
   public setHandler(handler: (effect: any) => void): void {
