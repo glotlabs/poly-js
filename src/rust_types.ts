@@ -71,6 +71,15 @@ interface WriteText {
   resultMsgName: string;
 }
 
+interface BrowserEffect {
+  type: string;
+  config: SetTimeoutConfig;
+}
+
+interface SetTimeoutConfig {
+  duration: number;
+}
+
 interface TimeEffect {
   type: string;
   config: any;
@@ -263,4 +272,6 @@ export {
   ClipboardEffect,
   WriteText,
   JsMsg,
+  BrowserEffect,
+  SetTimeoutConfig,
 };

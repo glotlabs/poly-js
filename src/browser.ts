@@ -10,6 +10,7 @@ interface Browser {
     config: ListenConfig
   ): AbortFn;
   setInterval(handler: TimerHandler, timeout?: number): AbortFn;
+  setTimeout(handler: TimerHandler, timeout?: number): AbortFn;
   dispatchEvent(eventTarget: EventTarget, event: Event): void;
 }
 
@@ -50,6 +51,16 @@ class RealBrowser implements Browser {
     return {
       abort() {
         window.clearInterval(id);
+      },
+    };
+  }
+
+  public setTimeout(handler: TimerHandler, timeout?: number): AbortFn {
+    const id = window.setTimeout(handler, timeout);
+
+    return {
+      abort() {
+        window.clearTimeout(id);
       },
     };
   }
