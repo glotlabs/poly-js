@@ -97,9 +97,6 @@ class Poly {
       (msg: Msg) => {
         this.update(msg);
       },
-      (msg: JsMsg) => {
-        this.updateFromJs(msg)
-      },
     );
   }
 

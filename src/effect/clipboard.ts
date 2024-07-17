@@ -1,6 +1,6 @@
 import { ClipboardInterface } from "../browser/clipboard";
 import { Domain, Logger } from "../logger";
-import { ClipboardEffect, JsMsg, WriteText } from "../rust_types";
+import { ClipboardEffect, WriteText, WriteTextResult } from "../rust_types";
 
 class ClipboardEffectHandler {
   constructor(
@@ -8,7 +8,7 @@ class ClipboardEffectHandler {
     private readonly logger: Logger
   ) { }
 
-  public handle(effect: ClipboardEffect): JsMsg | null {
+  public handle(effect: ClipboardEffect): WriteTextResult | null {
     switch (effect.type) {
       case "writeText":
         return this.writeText(effect.config as WriteText);
@@ -24,16 +24,13 @@ class ClipboardEffectHandler {
     }
   }
 
-  private writeText(config: WriteText): JsMsg {
+  private writeText(config: WriteText): WriteTextResult {
     try {
       this.console.writeText(config.text);
 
       return {
-        type: config.resultMsgName,
-        data: {
-          success: true,
-          data: null,
-        },
+        success: true,
+        error: null,
       };
     } catch (e: any) {
       this.logger.error({
@@ -43,11 +40,8 @@ class ClipboardEffectHandler {
       });
 
       return {
-        type: config.resultMsgName,
-        data: {
-          success: false,
-          message: e.message,
-        }
+        success: false,
+        error: e.message,
       };
     }
   }

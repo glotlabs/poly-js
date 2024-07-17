@@ -68,7 +68,11 @@ interface ClipboardEffect {
 
 interface WriteText {
   text: string;
-  resultMsgName: string;
+}
+
+interface WriteTextResult {
+  success: boolean;
+  error: string | null;
 }
 
 interface BrowserEffect {
@@ -271,6 +275,7 @@ export {
   Log,
   ClipboardEffect,
   WriteText,
+  WriteTextResult,
   JsMsg,
   BrowserEffect,
   SetTimeoutConfig,

@@ -51,7 +51,6 @@ class EffectHandler {
     private readonly jsonHelper: JsonHelper,
     private readonly logger: Logger,
     private readonly onMsg: (msg: Msg) => void,
-    private readonly sendReturnMsg: (msg: JsMsg) => void,
   ) {
     this.domHandler = new DomEffectHandler(
       this.browser,
@@ -107,8 +106,7 @@ class EffectHandler {
     });
 
     groupedEffects.clipboardEffects.forEach((effect) => {
-      const returnMsg = this.clipboardHandler.handle(effect);
-      this.sendReturnMsgHelper(returnMsg);
+      this.clipboardHandler.handle(effect);
     });
 
     groupedEffects.navigationEffects.forEach((effect) => {
@@ -172,12 +170,6 @@ class EffectHandler {
 
   private handleEffectfulMsg({ msg, effect }: EffectfulMsg): void {
     this.onMsg({ msg, effect });
-  }
-
-  private sendReturnMsgHelper(returnMsg: JsMsg | null): void {
-    if (returnMsg) {
-      this.sendReturnMsg(returnMsg);
-    }
   }
 }
 
