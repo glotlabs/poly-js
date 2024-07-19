@@ -31,7 +31,7 @@ class EventListenerManager {
     private readonly browser: Browser,
     private readonly logger: Logger,
     private readonly onMsg: (msg: SubscriptionMsg, event: Event) => void
-  ) {}
+  ) { }
 
   public setEventListeners(newListeners: RustEventListener[]) {
     const oldListeners = [...this.state.eventListeners];
@@ -235,6 +235,14 @@ class EventListenerManager {
     const e = event as KeyboardEvent;
     if (!("code" in e)) {
       return false;
+    }
+
+    if (matcher.require_ctrl && !e.ctrlKey) {
+      return false
+    }
+
+    if (matcher.require_meta && !e.metaKey) {
+      return false
     }
 
     const key = matcher.key.toLowerCase();

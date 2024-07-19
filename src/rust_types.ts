@@ -189,6 +189,8 @@ interface ClosestSelectorMatcher {
 
 interface KeyboardKeyMatcher {
   key: string;
+  require_ctrl: boolean
+  require_meta: boolean
 }
 
 interface MouseButtonMatcher {
