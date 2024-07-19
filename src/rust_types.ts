@@ -176,7 +176,6 @@ interface EventMatcher {
   | ClosestSelectorMatcher
   | MouseButtonMatcher
   | KeyboardKeyMatcher
-  | KeyboardComboMatcher;
 }
 
 interface ExactSelectorMatcher {
@@ -197,21 +196,9 @@ interface MouseButtonMatcher {
   button: string;
 }
 
-interface KeyboardComboMatcher {
-  combo: KeyboardCombo;
-}
-
 interface EventPropagation {
   stopPropagation: boolean;
   preventDefault: boolean;
-}
-
-interface KeyboardCombo {
-  key: string;
-  altKey: boolean;
-  ctrlKey: boolean;
-  metaKey: boolean;
-  shiftKey: boolean;
 }
 
 interface DebounceConfig {
@@ -243,14 +230,12 @@ export {
   Subscription,
   RustInterval,
   RustEventListener,
-  KeyboardCombo,
   DebounceConfig,
   EventMatcher,
   ExactSelectorMatcher,
   ClosestSelectorMatcher,
   MouseButtonMatcher,
   KeyboardKeyMatcher,
-  KeyboardComboMatcher,
   Effect,
   NavigationEffect,
   LocalStorageEffect,

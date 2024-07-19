@@ -6,7 +6,6 @@ import {
   ClosestSelectorMatcher,
   EventMatcher,
   ExactSelectorMatcher,
-  KeyboardComboMatcher,
   KeyboardKeyMatcher,
   RustEventListener,
   SubscriptionMsg,
@@ -181,12 +180,6 @@ class EventListenerManager {
           event
         );
 
-      case "keyboardCombo":
-        return this.matchKeyboardCombo(
-          matcher.config as KeyboardComboMatcher,
-          event
-        );
-
       default:
         this.logger.warn({
           domain: Domain.EventListener,
@@ -246,22 +239,6 @@ class EventListenerManager {
     }
 
     const key = matcher.key.toLowerCase();
-    const code = e.code.toLowerCase();
-
-    return code === key || key === "any";
-  }
-
-  private matchKeyboardCombo(
-    matcher: KeyboardComboMatcher,
-    event: Event
-  ): boolean {
-    const e = event as KeyboardEvent;
-    if (!("code" in e)) {
-      return false;
-    }
-
-    // TODO: check combinations
-    const key = matcher.combo.key.toLowerCase();
     const code = e.code.toLowerCase();
 
     return code === key || key === "any";
