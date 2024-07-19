@@ -230,11 +230,11 @@ class EventListenerManager {
       return false;
     }
 
-    if (matcher.require_ctrl && !e.ctrlKey) {
+    if (matcher.requiresCtrl && !e.ctrlKey) {
       return false
     }
 
-    if (matcher.require_meta && !e.metaKey) {
+    if (matcher.requiresMeta && !e.metaKey) {
       return false
     }
 
