@@ -256,12 +256,11 @@ function prepareEventListenersDelta(
   oldListeners: ActiveEventListener[],
   newListeners: RustEventListener[]
 ): EventListenersDelta {
-  const newListenerById = new Map(newListeners.map((listener) => [listener.id, listener]));
-  const oldListenerById = new Map(oldListeners.map((listener) => [listener.listener.id, listener.listener]));
-
   const listenersToRemove: ActiveEventListener[] = [];
   const listenersToKeep: ActiveEventListener[] = [];
   const listenersToAdd: RustEventListener[] = [];
+
+  const newListenerById = new Map(newListeners.map((listener) => [listener.id, listener]));
 
   oldListeners.forEach((listener) => {
     let newListener = newListenerById.get(listener.listener.id);
@@ -273,10 +272,12 @@ function prepareEventListenersDelta(
     }
   });
 
+  const oldListenerById = new Map(listenersToKeep.map(({ listener }) => [listener.id, listener]));
+
   newListeners.forEach((listener) => {
     let oldListener = oldListenerById.get(listener.id);
 
-    if (!oldListener || !hasSameMsg(oldListener, listener)) {
+    if (!oldListener) {
       listenersToAdd.push(listener);
     }
   });
