@@ -1,5 +1,6 @@
 import { AbortFn, Browser, listenTargetFromString } from "../browser";
 import { Domain, Logger, Verbosity } from "../logger";
+import { deepEqual } from 'fast-equals';
 
 import {
   Msg,
@@ -255,15 +256,17 @@ function prepareEventListenersDelta(
   oldListeners: ActiveEventListener[],
   newListeners: RustEventListener[]
 ): EventListenersDelta {
-  const newIds = newListeners.map((listener) => listener.id);
-  const oldIds = oldListeners.map((listener) => listener.listener.id);
+  const newListenerById = new Map(newListeners.map((listener) => [listener.id, listener]));
+  const oldListenerById = new Map(oldListeners.map((listener) => [listener.listener.id, listener.listener]));
 
   const listenersToRemove: ActiveEventListener[] = [];
   const listenersToKeep: ActiveEventListener[] = [];
   const listenersToAdd: RustEventListener[] = [];
 
   oldListeners.forEach((listener) => {
-    if (newIds.includes(listener.listener.id)) {
+    let newListener = newListenerById.get(listener.listener.id);
+
+    if (newListener && hasSameMsg(listener.listener, newListener)) {
       listenersToKeep.push(listener);
     } else {
       listenersToRemove.push(listener);
@@ -271,7 +274,9 @@ function prepareEventListenersDelta(
   });
 
   newListeners.forEach((listener) => {
-    if (!oldIds.includes(listener.id)) {
+    let oldListener = oldListenerById.get(listener.id);
+
+    if (!oldListener || !hasSameMsg(oldListener, listener)) {
       listenersToAdd.push(listener);
     }
   });
@@ -281,6 +286,10 @@ function prepareEventListenersDelta(
     listenersToKeep,
     listenersToAdd,
   };
+}
+
+function hasSameMsg(a: RustEventListener, b: RustEventListener): boolean {
+  return deepEqual(a.msg.config, b.msg.config);
 }
 
 function mouseButtonToString(n: number): string | null {

@@ -13,6 +13,7 @@
   "author": "Petter Rasmussen",
   "license": "MIT",
   "dependencies": {
+    "fast-equals": "^5.0.1",
     "morphdom": "^2.6.1"
   },
   "devDependencies": {
