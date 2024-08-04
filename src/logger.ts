@@ -93,6 +93,7 @@ enum Domain {
   Dom,
   Time,
   LocalStorage,
+  SessionStorage,
   Navigation,
   Console,
   Clipboard,

@@ -25,6 +25,7 @@ import { BrowserLocation, LocationInterface } from "./browser/location";
 import { replacePlaceholder } from "./msg";
 import { isObject } from "./util";
 import { BrowserClipboard, ClipboardInterface } from "./browser/clipboard";
+import { BrowserSessionStorage, SessionStorage } from "./browser/session_storage";
 
 interface Config {
   loggerConfig?: LoggerConfig;
@@ -43,6 +44,7 @@ class Poly {
   private readonly window: Window;
   private readonly date: Date;
   private readonly localStorage: LocalStorage;
+  private readonly sessionStorage: SessionStorage;
   private readonly logger: Logger;
   private readonly jsonHelper: JsonHelper;
   private readonly history: History;
@@ -69,6 +71,7 @@ class Poly {
     this.window = new BrowserWindow();
     this.date = new BrowserDate();
     this.localStorage = new BrowserLocalStorage();
+    this.sessionStorage = new BrowserSessionStorage();
     this.logger = new BrowserLogger(
       config?.loggerConfig ?? defaultLoggerConfig()
     );
@@ -92,6 +95,7 @@ class Poly {
       this.history,
       this.location,
       this.localStorage,
+      this.sessionStorage,
       this.jsonHelper,
       this.logger,
       (msg: Msg) => {

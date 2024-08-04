@@ -142,6 +142,11 @@ interface LocalStorageEffect {
   config: LocalStorageGetItem | LocalStorageSetItem;
 }
 
+interface SessionStorageEffect {
+  type: string;
+  config: SessionStorageGetItem | SessionStorageSetItem;
+}
+
 interface EffectfulMsg {
   msg: any;
   effect: Effect;
@@ -216,6 +221,15 @@ interface LocalStorageSetItem {
   value: any;
 }
 
+interface SessionStorageGetItem {
+  key: string;
+}
+
+interface SessionStorageSetItem {
+  key: string;
+  value: any;
+}
+
 interface FileInfo {
   name: string;
   mime: string;
@@ -241,6 +255,9 @@ export {
   LocalStorageEffect,
   LocalStorageGetItem,
   LocalStorageSetItem,
+  SessionStorageEffect,
+  SessionStorageGetItem,
+  SessionStorageSetItem,
   EffectfulMsg,
   PureMsg,
   SubscriptionMsg,

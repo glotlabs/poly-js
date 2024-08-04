@@ -1,7 +1,9 @@
 import { History } from "./browser/history";
 import { LocalStorage } from "./browser/local_storage";
+import { SessionStorage } from "./browser/session_storage";
 import { AppEffectHandler } from "./effect/app";
 import { LocalStorageEffectHandler } from "./effect/local_storage";
+import { SessionStorageEffectHandler } from "./effect/session_storage";
 import { NavigationEffectHandler } from "./effect/navigation";
 import { JsonHelper } from "./json";
 import { Domain, Logger, Verbosity } from "./logger";
@@ -13,8 +15,8 @@ import {
   DomEffect,
   Effect,
   EffectfulMsg,
-  JsMsg,
   LocalStorageEffect,
+  SessionStorageEffect,
   Msg,
   NavigationEffect,
   TimeEffect,
@@ -39,6 +41,7 @@ class EffectHandler {
   private readonly timeHandler: TimeEffectHandler;
   private readonly navigationHandler: NavigationEffectHandler;
   private readonly localStorageHandler: LocalStorageEffectHandler;
+  private readonly sessionStorageHandler: SessionStorageEffectHandler;
   private readonly appEffectHandler: AppEffectHandler;
 
   constructor(
@@ -51,6 +54,7 @@ class EffectHandler {
     private readonly history: History,
     private readonly location: LocationInterface,
     private readonly localStorage: LocalStorage,
+    private readonly sessionStorage: SessionStorage,
     private readonly jsonHelper: JsonHelper,
     private readonly logger: Logger,
     private readonly onMsg: (msg: Msg) => void,
@@ -78,6 +82,12 @@ class EffectHandler {
 
     this.localStorageHandler = new LocalStorageEffectHandler(
       this.localStorage,
+      this.jsonHelper,
+      this.logger
+    );
+
+    this.sessionStorageHandler = new SessionStorageEffectHandler(
+      this.sessionStorage,
       this.jsonHelper,
       this.logger
     );
@@ -122,6 +132,10 @@ class EffectHandler {
       this.localStorageHandler.handle(effect);
     });
 
+    groupedEffects.sessionStorageEffects.forEach((effect) => {
+      this.sessionStorageHandler.handle(effect);
+    });
+
     groupedEffects.appEffects.forEach((effect) => {
       this.appEffectHandler.handle(effect);
     });
@@ -141,6 +155,11 @@ class EffectHandler {
       case "localStorage":
         return this.localStorageHandler.handle(
           effect.config as LocalStorageEffect
+        );
+
+      case "sessionStorage":
+        return this.sessionStorageHandler.handle(
+          effect.config as SessionStorageEffect
         );
 
       case "dom":
@@ -188,6 +207,7 @@ interface GroupedEffects {
   clipboardEffects: ClipboardEffect[];
   navigationEffects: NavigationEffect[];
   localStorageEffects: LocalStorageEffect[];
+  sessionStorageEffects: SessionStorageEffect[];
   appEffects: any[];
 }
 
@@ -199,6 +219,7 @@ function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
     clipboardEffects: [],
     navigationEffects: [],
     localStorageEffects: [],
+    sessionStorageEffects: [],
     appEffects: [],
   };
 
@@ -229,6 +250,12 @@ function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
       case "localStorage":
         groupedEffects.localStorageEffects.push(
           effect.config as LocalStorageEffect
+        );
+        break;
+
+      case "sessionStorage":
+        groupedEffects.sessionStorageEffects.push(
+          effect.config as SessionStorageEffect
         );
         break;
 
