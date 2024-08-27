@@ -1,13 +1,13 @@
 import { History } from "./browser/history";
 import { LocalStorage } from "./browser/local_storage";
 import { SessionStorage } from "./browser/session_storage";
-import { AppEffectHandler } from "./effect/app";
+import { CustomEffectHandler } from "./effect/custom";
 import { LocalStorageEffectHandler } from "./effect/local_storage";
 import { SessionStorageEffectHandler } from "./effect/session_storage";
 import { NavigationEffectHandler } from "./effect/navigation";
 import { JsonHelper } from "./json";
 import { Domain, Logger, Verbosity } from "./logger";
-import { Config as AppEffectConfig } from "./effect/app";
+import { Config as CustomEffectConfig } from "./effect/custom";
 import {
   BrowserEffect,
   ClipboardEffect,
@@ -42,10 +42,10 @@ class EffectHandler {
   private readonly navigationHandler: NavigationEffectHandler;
   private readonly localStorageHandler: LocalStorageEffectHandler;
   private readonly sessionStorageHandler: SessionStorageEffectHandler;
-  private readonly appEffectHandler: AppEffectHandler;
+  private readonly customEffectHandler: CustomEffectHandler;
 
   constructor(
-    private readonly appEffectConfig: AppEffectConfig,
+    private readonly customEffectConfig: CustomEffectConfig,
     private readonly browser: Browser,
     private readonly console: ConsoleInterface,
     private readonly clipboard: ClipboardInterface,
@@ -92,8 +92,8 @@ class EffectHandler {
       this.logger
     );
 
-    this.appEffectHandler = new AppEffectHandler(
-      this.appEffectConfig,
+    this.customEffectHandler = new CustomEffectHandler(
+      this.customEffectConfig,
       this.logger
     );
   }
@@ -136,8 +136,8 @@ class EffectHandler {
       this.sessionStorageHandler.handle(effect);
     });
 
-    groupedEffects.appEffects.forEach((effect) => {
-      this.appEffectHandler.handle(effect);
+    groupedEffects.customEffects.forEach((effect) => {
+      this.customEffectHandler.handle(effect);
     });
   }
 
@@ -177,8 +177,8 @@ class EffectHandler {
       case "time":
         return this.timeHandler.handle(effect.config as TimeEffect);
 
-      case "app":
-        return this.appEffectHandler.handle(effect.config);
+      case "custom":
+        return this.customEffectHandler.handle(effect.config);
 
       default:
         this.logger.error({
@@ -191,8 +191,8 @@ class EffectHandler {
     throw new Error(`Unknown effect type: ${effect.type}`);
   }
 
-  public setAppEffectHandler(handler: (effect: any) => void) {
-    this.appEffectHandler.setHandler(handler);
+  public setCustomEffectHandler(handler: (effect: any) => void) {
+    this.customEffectHandler.setHandler(handler);
   }
 
   private handleEffectfulMsg({ msg, effect }: EffectfulMsg): void {
@@ -208,7 +208,7 @@ interface GroupedEffects {
   navigationEffects: NavigationEffect[];
   localStorageEffects: LocalStorageEffect[];
   sessionStorageEffects: SessionStorageEffect[];
-  appEffects: any[];
+  customEffects: any[];
 }
 
 function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
@@ -220,7 +220,7 @@ function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
     navigationEffects: [],
     localStorageEffects: [],
     sessionStorageEffects: [],
-    appEffects: [],
+    customEffects: [],
   };
 
   effects.forEach((effect) => {
@@ -259,8 +259,8 @@ function groupEffects(effects: Effect[], logger: Logger): GroupedEffects {
         );
         break;
 
-      case "app":
-        groupedEffects.appEffects.push(effect.config);
+      case "custom":
+        groupedEffects.customEffects.push(effect.config);
         break;
 
       case "none":

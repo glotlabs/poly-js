@@ -98,7 +98,7 @@ enum Domain {
   Console,
   Clipboard,
   Browser,
-  AppEffect,
+  CustomEffect,
 }
 
 enum DebugLogger {

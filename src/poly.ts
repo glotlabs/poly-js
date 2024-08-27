@@ -16,9 +16,9 @@ import { BrowserLocalStorage, LocalStorage } from "./browser/local_storage";
 import { BrowserWindow, Window } from "./browser/window";
 import { BrowserHistory, History } from "./browser/history";
 import {
-  Config as AppEffectConfig,
-  defaultAppEffectConfig,
-} from "./effect/app";
+  Config as CustomEffectConfig,
+  defaultCustomEffectConfig,
+} from "./effect/custom";
 import { BrowserDate, Date } from "./browser/date";
 import { BrowserConsole, ConsoleInterface } from "./browser/console";
 import { BrowserLocation, LocationInterface } from "./browser/location";
@@ -29,7 +29,7 @@ import { BrowserSessionStorage, SessionStorage } from "./browser/session_storage
 
 interface Config {
   loggerConfig?: LoggerConfig;
-  appEffectConfig?: AppEffectConfig;
+  customEffectConfig?: CustomEffectConfig;
 }
 
 interface State {
@@ -86,7 +86,7 @@ class Poly {
       }
     );
     this.effectHandler = new EffectHandler(
-      this.config?.appEffectConfig ?? defaultAppEffectConfig(),
+      this.config?.customEffectConfig ?? defaultCustomEffectConfig(),
       this.browser,
       this.console,
       this.clipboard,
@@ -113,8 +113,8 @@ class Poly {
     this.updateFromJs({ type, data });
   }
 
-  public onAppEffect(handler: (effect: any) => void) {
-    this.effectHandler.setAppEffectHandler(handler);
+  public onCustomEffect(handler: (effect: any) => void) {
+    this.effectHandler.setCustomEffectHandler(handler);
   }
 
   private updateDom(markup: string) {
